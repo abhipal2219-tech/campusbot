@@ -1,34 +1,73 @@
+# 🏫 Campus Connect — UEM Kolkata
 
-# 🏫 UEM Kolkata Campus Bot
+AI-powered campus navigation chatbot for UEM Kolkata.
 
-A well-organized, modular chatbot system for UEM Kolkata campus navigation and information.
+## Architecture
 
-## 📁 Project Structure
+```
+┌──────────────────────┐         ┌──────────────────────┐
+│    GitHub Pages      │  HTTPS  │       Render         │
+│      Frontend        │────────▶│    Python Backend    │
+│                      │  /chat  │                      │
+│  frontend/           │         │  backend/            │
+│  ├── index.html      │         │  ├── app.py           │
+│  ├── style.css       │         │  ├── requirements.txt │
+│  └── script.js       │         │  └── data/           │
+└──────────────────────┘         └──────────┬───────────┘
+                                            │
+                                            ▼
+                                      Groq API (Llama 3)
+```
 
-- `index.html`: The main unified chatbot interface.
-- `css/`: Modern styles for the chatbot.
-- `js/`: Modular JavaScript logic.
-  - `vector-store.js`: Local TF-IDF search engine.
-  - `search-engine.js`: Data processing and search logic.
-  - `chatbot-ui.js`: Interactive UI controller.
-- `data/`: Centralized JSON datasets.
-  - `faculty.json`: Faculty details, cabins, and codes.
-  - `rooms.json`: Room allocations across all blocks.
-  - `sections.json`: Section locations and class teacher details.
-- `python/`: Backend scripts for RAG (Retrieval-Augmented Generation).
-  - `campus_rag_bot.py`: CLI-based RAG chatbot.
-  - `knowledge_base.py`: Logic to build the vector store from JSON data.
-  - `vector_store.py`: Core TF-IDF implementation.
+## Project Structure
 
-## 🚀 Getting Started
+```
+campusbot/
+├── frontend/              ← GitHub Pages (static site)
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
+│
+├── backend/               ← Render Web Service (Python/Flask)
+│   ├── app.py
+│   ├── requirements.txt
+│   ├── .env.example
+│   ├── data/
+│   │   ├── faculty.json
+│   │   ├── rooms.json
+│   │   └── sections.json
+│   └── README.md
+│
+└── .github/
+    └── workflows/
+        └── deploy.yml     ← Auto-deploys frontend/ to GitHub Pages
+```
 
-### Web Interface
-Simply open `index.html` in any modern web browser. The bot works entirely offline using the pre-loaded JSON data and a local vector search engine.
+## Deployments
 
-### Python CLI Bot
-1. Navigate to the `python/` directory.
-2. Run `python campus_rag_bot.py`.
-3. Ask questions like "Where is Section G?" or "Who is the mentor for Section A?".
+| Component | Platform | URL |
+|-----------|----------|-----|
+| Frontend  | GitHub Pages | https://abhipal2219-tech.github.io/campusbot |
+| Backend   | Render | *(add your Render URL here after deploying)* |
 
-## 🛠️ Data Updates
-To update campus information, edit the files in the `data/` directory. Both the web interface and the Python bot will automatically use the updated data.
+## Quick Start
+
+### Frontend (GitHub Pages)
+Push to `main` branch — GitHub Actions automatically deploys `frontend/` to GitHub Pages.
+
+### Backend (Render)
+See [`backend/README.md`](backend/README.md) for full setup instructions.
+
+**Required environment variable on Render:**
+```
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+## Connecting Frontend to Backend
+
+After deploying to Render, update `BACKEND_URL` in `frontend/script.js`:
+```js
+const BACKEND_URL = 'https://your-service.onrender.com';
+```
+
+Then push — GitHub Actions will redeploy the frontend automatically.

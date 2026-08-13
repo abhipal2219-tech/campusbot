@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Campus Connect — UEM Kolkata</title>
+    <meta name="description" content="Campus Connect is the official AI chatbot for UEM Kolkata. Find sections, faculty cabins, room locations and more." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <div class="chat-widget">
+        <div class="chat-header">
+            <div class="bot-avatar">🎓</div>
+            <div class="bot-info">
+                <h2>Campus Connect</h2>
+                <p><span class="status-dot"></span>UEM Kolkata — Online</p>
+            </div>
+        </div>
+
+        <div class="mode-bar">
+            <div class="mode-chip" id="chip-sections" onclick="window.UI.quickSend('Where is Section A?')">📍 Sections</div>
+            <div class="mode-chip" id="chip-faculty"  onclick="window.UI.quickSend('Show all Physics faculty')">👨‍🏫 Faculty</div>
+            <div class="mode-chip" id="chip-library"  onclick="window.UI.quickSend('Where is the library?')">📚 Library</div>
+            <div class="mode-chip" id="chip-cafeteria" onclick="window.UI.quickSend('Where is the cafeteria?')">🍽️ Cafeteria</div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <div class="chat-input-area">
+            <input id="userInput" type="text" placeholder="Ask about sections, faculty, rooms…" autocomplete="off" />
+            <button id="sendBtn" aria-label="Send">
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', async () => {
+            const ok = await window.SearchEngine.init();
+            if (ok) {
+                window.UI.init();
+            } else {
+                document.getElementById('chatMessages').innerHTML =
+                    '<div class="error-msg">⚠️ Failed to load campus data. Please refresh.</div>';
+            }
+        });
+    </script>
+</body>
+</html>

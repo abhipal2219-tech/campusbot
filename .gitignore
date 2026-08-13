@@ -1,15 +1,21 @@
-# Python
+# Python cache
 __pycache__/
-*.py[cod]
-*.egg-info/
+*.pyc
+
+# Environment files
 .env
-venv/
-env/
+backend/.env
+
+# Node (if added later)
+node_modules/
+
+# IDE
+.vscode/
+.idea/
 
 # OS
 .DS_Store
 Thumbs.db
 
-# IDE
-.vscode/
-.idea/
+# Old flat structure (archived)
+campus bot/
