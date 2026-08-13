@@ -3,43 +3,33 @@ name: Deploy Frontend to GitHub Pages
 on:
   push:
     branches: [main]
-    paths:
-      - "frontend/**"   # Only trigger when frontend files change
-
-  # Allow manual trigger from Actions tab
-  workflow_dispatch:
+  workflow_dispatch:   # Allow manual trigger from the Actions tab
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
-# Only allow one concurrent deployment
 concurrency:
   group: "pages"
   cancel-in-progress: true
 
 jobs:
   deploy:
-    name: Deploy to GitHub Pages
+    name: Build & Deploy to GitHub Pages
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload frontend/ as Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy frontend/ to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          # Deploy the frontend/ directory
-          path: "frontend"
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend
+          publish_branch: gh-pages
+          force_orphan: true
+          user_name: "github-actions[bot]"
+          user_email: "github-actions[bot]@users.noreply.github.com"
+          commit_message: "Deploy frontend to GitHub Pages"
