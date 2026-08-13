@@ -9,7 +9,7 @@
 // ── Backend URL ────────────────────────────────────────
 // Replace this with your Render service URL after deploying.
 // e.g. "https://campusbot-xyz.onrender.com"
-const BACKEND_URL = 'YOUR_RENDER_URL';
+const BACKEND_URL = 'https://campusbot-vqvx.onrender.com';
 
 // =======================================================
 // 1. VectorStore — client-side TF-IDF search
