@@ -351,7 +351,7 @@ const SearchEngine = {
 window.SearchEngine = SearchEngine;
 
 // =======================================================
-// 3. UI Controller
+// 3. UI Controller — Obsidian Glass / Noir Design
 // =======================================================
 const UI = {
     msgEl:   document.getElementById('chatMessages'),
@@ -372,10 +372,10 @@ const UI = {
 
     _welcome() {
         this.addMessage('bot',
-            `👋 Hello! I'm <strong>Campus Connect</strong>.<br><br>` +
-            `I can help you find classrooms, faculty cabins, and section details for UEM Kolkata.`
+            `<strong>Campus Connect</strong> — system online.<br><br>` +
+            `I can find sections, faculty cabins, room locations, and mentors for UEM Kolkata.`
         );
-        this.addChips(['Where is Section G?', 'Where is the library?', 'Show Physics teachers']);
+        this.addChips(['Where is Section G?', 'Where is the library?', 'Section E mentors', 'Show Physics faculty']);
     },
 
     async handleSend() {
@@ -389,41 +389,35 @@ const UI = {
         try {
             const reply = await window.SearchEngine.findResponse(text);
             this.hideTyping();
-            this.addMessage('bot', reply ? reply.replace(/\n/g, '<br>') :
-                "🤔 I couldn't find a direct match. Try a section name, room number, or faculty name.");
+            this.addMessage('bot', reply
+                ? reply.replace(/\n/g, '<br>')
+                : "No records found for that query."
+            );
         } catch (e) {
             this.hideTyping();
-            this.addMessage('bot', '❌ Sorry, something went wrong. Please try again.');
-            console.error('[UI] Error:', e);
+            this.addMessage('bot', 'System error — please try again.');
+            console.error('[UI]', e);
         }
+    },
+
+    _time() {
+        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     },
 
     addMessage(role, html) {
         const wrap = document.createElement('div');
         wrap.className = `msg ${role}`;
 
-        const avatar = document.createElement('div');
-        avatar.className = 'msg-avatar';
-
-        if (role === 'bot') {
-            avatar.textContent = '🎓';
-        } else {
-            avatar.textContent = '👤';
-            avatar.style.background = 'linear-gradient(135deg,#9333ea,#ec4899)';
-        }
-
         const bub = document.createElement('div');
         bub.className = 'bubble';
-        bub.innerHTML  = html;
+        bub.innerHTML = html;
 
-        if (role === 'bot') {
-            wrap.appendChild(avatar);
-            wrap.appendChild(bub);
-        } else {
-            wrap.appendChild(bub);
-            wrap.appendChild(avatar);
-        }
+        const time = document.createElement('div');
+        time.className   = 'msg-time';
+        time.textContent = this._time();
 
+        wrap.appendChild(bub);
+        wrap.appendChild(time);
         this.msgEl.appendChild(wrap);
         this.msgEl.scrollTop = this.msgEl.scrollHeight;
     },
@@ -445,19 +439,14 @@ const UI = {
     showTyping() {
         this.isBusy = true;
         const w = document.createElement('div');
+        w.id        = 'typing-indicator';
         w.className = 'msg bot';
-        w.id = 'typing-indicator';
 
-        const av = document.createElement('div');
-        av.className   = 'msg-avatar';
-        av.textContent = '🎓';
+        const bub = document.createElement('div');
+        bub.className = 'bubble';
+        bub.innerHTML = '<div class="cursor-block"></div>';
 
-        const dots = document.createElement('div');
-        dots.className = 'bubble typing-dots';
-        dots.innerHTML = '<span></span><span></span><span></span>';
-
-        w.appendChild(av);
-        w.appendChild(dots);
+        w.appendChild(bub);
         this.msgEl.appendChild(w);
         this.msgEl.scrollTop = this.msgEl.scrollHeight;
     },
