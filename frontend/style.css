@@ -1,14 +1,11 @@
 /* ===================================================
    Campus Connect — style.css
    Design System: Obsidian Glass / Dark Noir
-   Monochromatic • Glassmorphism • Inter + Geist
+   Fully Mobile-Optimised  •  iOS + Android Safe Areas
    =================================================== */
-
-/* ── Google Fonts already loaded via <link> ── */
 
 /* ── Design Tokens ─────────────────────────────── */
 :root {
-    /* Surfaces */
     --bg:                  #000000;
     --surface:             #131313;
     --surface-dim:         #131313;
@@ -18,126 +15,127 @@
     --surface-high:        #2a2a2a;
     --surface-highest:     #353535;
 
-    /* Text */
     --on-surface:          #e2e2e2;
     --on-surface-variant:  #c4c7c8;
     --secondary-text:      #8e9192;
 
-    /* Primary = white */
     --primary:             #ffffff;
     --on-primary:          #131313;
 
-    /* Glass */
     --glass-fill:          rgba(255, 255, 255, 0.04);
     --glass-fill-high:     rgba(255, 255, 255, 0.08);
     --glass-border:        rgba(255, 255, 255, 0.12);
     --glass-blur:          20px;
-
-    /* Outline */
     --outline:             #444748;
 
-    /* Typography */
     --font-body:           'Inter', sans-serif;
     --font-mono:           'Geist', monospace;
 
-    /* Spacing unit */
-    --unit:                8px;
-    --gutter:              16px;
-    --pad:                 24px;
-    --max-w:               720px;
+    --unit:  8px;
+    --gutter: 16px;
+    --pad:    20px;
+    --max-w:  720px;
 
-    /* Radius — soft-brutalist */
+    /* Safe area insets (iOS notch / home indicator) */
+    --safe-top:    env(safe-area-inset-top,    0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left:   env(safe-area-inset-left,   0px);
+    --safe-right:  env(safe-area-inset-right,  0px);
+
+    /* Bar heights */
+    --topbar-h:  calc(56px + var(--safe-top));
+    --inputbar-h: 70px;
+
+    /* Radius */
     --r-sm:   2px;
     --r-md:   4px;
-    --r-lg:   8px;
+    --r-lg:   12px;
     --r-full: 9999px;
 }
 
 /* ── Reset ──────────────────────────────────────── */
 *, *::before, *::after {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+    margin: 0; padding: 0;
+    -webkit-tap-highlight-color: transparent;
 }
 
-html { height: 100%; }
+html {
+    height: 100%;
+    /* Prevent iOS font size inflation */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
 
 body {
     font-family: var(--font-body);
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.55;
     letter-spacing: 0.01em;
     color: var(--on-surface);
     background: var(--bg);
-    height: 100dvh;          /* fixed height — required for flex scroll to work */
+    /* Use dvh so it adapts when mobile browser chrome appears/disappears */
+    height: 100dvh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    /* Prevent rubber-band scroll on iOS from showing white background */
+    overscroll-behavior: none;
 }
 
-/* ── Drifting dots background ───────────────────── */
+/* ── Dot background — static, no animation for perf ─ */
 .drifting-dots {
     position: fixed;
     inset: 0;
     z-index: -1;
     pointer-events: none;
     background-image:
-        radial-gradient(circle at 10% 20%, rgba(255,255,255,.12) 1px,   transparent 1px),
-        radial-gradient(circle at 70% 60%, rgba(255,255,255,.16) 1.5px, transparent 1.5px),
-        radial-gradient(circle at 40% 90%, rgba(255,255,255,.08) 1px,   transparent 1px),
-        radial-gradient(circle at 90% 10%, rgba(255,255,255,.20) 0.5px, transparent 0.5px),
-        radial-gradient(circle at 30% 40%, rgba(255,255,255,.12) 1.5px, transparent 1.5px),
-        radial-gradient(circle at 80% 80%, rgba(255,255,255,.08) 2px,   transparent 2px),
-        radial-gradient(circle at 50% 50%, rgba(255,255,255,.16) 1px,   transparent 1px);
+        radial-gradient(circle at 10% 20%, rgba(255,255,255,.10) 1px,   transparent 1px),
+        radial-gradient(circle at 70% 60%, rgba(255,255,255,.14) 1.5px, transparent 1.5px),
+        radial-gradient(circle at 40% 90%, rgba(255,255,255,.07) 1px,   transparent 1px),
+        radial-gradient(circle at 90% 10%, rgba(255,255,255,.18) 0.5px, transparent 0.5px),
+        radial-gradient(circle at 30% 40%, rgba(255,255,255,.10) 1.5px, transparent 1.5px),
+        radial-gradient(circle at 80% 80%, rgba(255,255,255,.07) 2px,   transparent 2px),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,.14) 1px,   transparent 1px);
     background-size: 45px 45px, 60px 60px, 50px 50px, 30px 30px, 70px 70px, 90px 90px, 40px 40px;
 }
 
-/* Ambient blobs — GPU friendly via opacity only */
+/* ── Ambient blobs ───────────────────────────────── */
+.blobs-layer {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
 .ambient-blob {
     position: absolute;
     border-radius: 50%;
     filter: blur(80px);
-    opacity: 0.08;
-    z-index: -1;
-    pointer-events: none;
+    opacity: 0.07;
     background: #ffffff;
-    will-change: opacity;
 }
-
-/* ── Glass utilities ────────────────────────────── */
-.glass {
-    background: var(--glass-fill);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-    border: 1px solid var(--glass-border);
-}
-
-.glass-high {
-    background: var(--glass-fill-high);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 0 20px rgba(255,255,255,.05);
-}
+.blob-top    { width: 350px; height: 350px; top: -15%;  left: -10%; }
+.blob-bottom { width: 450px; height: 450px; bottom: -20%; right: -10%; background: #a0a0a0; }
 
 /* ── Top bar ────────────────────────────────────── */
 .top-bar {
+    /* Fixed + safe-area-inset-top for notch */
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     z-index: 50;
-    height: 64px;
-    background: rgba(0,0,0,.80);
+    height: var(--topbar-h);
+    padding-top: var(--safe-top);
+    padding-left: max(var(--pad), var(--safe-left));
+    padding-right: max(var(--pad), var(--safe-right));
+    padding-bottom: 0;
+    background: rgba(0,0,0,.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--glass-border);
-    box-shadow: 0 0 20px rgba(255,255,255,.04);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 var(--pad);
-    max-width: 100%;
 }
 
 .brand {
@@ -145,106 +143,117 @@ body {
     align-items: center;
     gap: 8px;
 }
-
 .brand h1 {
-    font-family: var(--font-body);
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--primary);
+    font-family: var(--font-body);
 }
-
 .pulse-dot {
-    width: 7px; height: 7px;
+    width: 6px; height: 6px;
     border-radius: 50%;
     background: var(--primary);
-    animation: pulse 2s cubic-bezier(.4,0,.6,1) infinite;
     margin-top: 2px;
+    animation: pulse 2s cubic-bezier(.4,0,.6,1) infinite;
 }
-
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50%       { opacity: .25; }
 }
 
+/* Touch-friendly icon buttons — min 44×44px tap target */
 .icon-btn {
     background: transparent;
     border: none;
     cursor: pointer;
     color: var(--on-surface-variant);
-    padding: 8px;
-    border-radius: var(--r-full);
+    /* 44px tap target, visually 32px */
+    min-width: 44px;
+    min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background .15s, color .15s, transform .1s;
+    border-radius: var(--r-full);
+    transition: background .15s, color .15s;
 }
-.icon-btn:hover  { background: rgba(255,255,255,.08); color: var(--primary); }
-.icon-btn:active { transform: scale(.92); }
+.icon-btn:active { background: rgba(255,255,255,.1); color: var(--primary); }
 
-/* ── Chips bar (quick topics) ───────────────────── */
+/* ── Chips bar ──────────────────────────────────── */
 .chips-bar {
     position: fixed;
-    top: 64px;
+    top: var(--topbar-h);
     left: 0; right: 0;
     z-index: 40;
     display: flex;
-    gap: 6px;
-    padding: 0 var(--gutter);
-    background: rgba(0,0,0,.75);
+    gap: 8px;
+    padding-left: max(var(--gutter), var(--safe-left));
+    padding-right: max(var(--gutter), var(--safe-right));
+    background: rgba(0,0,0,.80);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--outline);
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     max-height: 0;
     opacity: 0;
-    transition: max-height .3s ease, opacity .3s ease, padding .3s ease;
+    pointer-events: none;
+    transition: max-height .25s ease, opacity .25s ease, padding .25s ease;
     scrollbar-width: none;
 }
 .chips-bar::-webkit-scrollbar { display: none; }
 .chips-bar.open {
-    max-height: 56px;
+    max-height: 60px;
     opacity: 1;
     padding-top: 10px;
     padding-bottom: 10px;
+    pointer-events: auto;
 }
 
 .chip {
     flex-shrink: 0;
+    /* 36px height — comfortable touch target */
+    height: 36px;
+    display: flex;
+    align-items: center;
     background: var(--glass-fill);
     border: 1px solid var(--glass-border);
     color: var(--on-surface-variant);
-    padding: 4px 14px;
+    padding: 0 14px;
     border-radius: var(--r-md);
     font-family: var(--font-mono);
     font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     cursor: pointer;
     white-space: nowrap;
-    transition: background .15s, color .15s, border-color .15s;
+    transition: background .15s, color .15s;
 }
-.chip:hover {
+.chip:active {
     background: rgba(255,255,255,.12);
     color: var(--primary);
-    border-color: rgba(255,255,255,.3);
 }
 
 /* ── Chat stream ────────────────────────────────── */
 .chat-stream {
     flex: 1;
-    min-height: 0;           /* CRITICAL: lets flex child shrink and scroll */
+    min-height: 0;           /* CRITICAL — enables overflow-y:auto in flex */
     overflow-y: auto;
-    padding: 80px var(--gutter) 100px;
+    -webkit-overflow-scrolling: touch; /* iOS momentum scroll */
+    overscroll-behavior: contain;
+    /* top: topbar-h, bottom: inputbar-h + home indicator */
+    padding-top: calc(var(--topbar-h) + 16px);
+    padding-bottom: calc(var(--inputbar-h) + var(--safe-bottom) + 16px);
+    padding-left: max(var(--gutter), var(--safe-left));
+    padding-right: max(var(--gutter), var(--safe-right));
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
     max-width: var(--max-w);
     width: 100%;
     margin: 0 auto;
     scrollbar-width: none;
-    overscroll-behavior: contain;
 }
 .chat-stream::-webkit-scrollbar { display: none; }
 
@@ -253,55 +262,47 @@ body {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    max-width: 85%;
-    animation: fadeUp .25s ease;
+    max-width: 88%;
+    animation: fadeUp .2s ease;
 }
-
 @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Bot message — left, glass panel */
-.msg.bot {
-    align-items: flex-start;
-    align-self: flex-start;
-}
+/* Bot — left aligned */
+.msg.bot  { align-items: flex-start; align-self: flex-start; }
+.msg.user { align-items: flex-end;   align-self: flex-end; }
 
 .msg.bot .bubble {
     background: var(--glass-fill);
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--glass-border);
-    border-left: 1px solid rgba(255,255,255,.25);
+    border-left: 1px solid rgba(255,255,255,.28);
     border-radius: var(--r-lg);
     border-top-left-radius: var(--r-sm);
-    padding: 14px 18px;
+    padding: 12px 16px;
     color: var(--on-surface);
     font-size: 14px;
-    line-height: 1.65;
-}
-
-/* User message — right, slightly more opaque */
-.msg.user {
-    align-items: flex-end;
-    align-self: flex-end;
+    line-height: 1.7;
+    word-break: break-word;
 }
 
 .msg.user .bubble {
     background: var(--surface-high);
     border-radius: var(--r-lg);
     border-top-right-radius: var(--r-sm);
-    padding: 14px 18px;
+    padding: 12px 16px;
     color: var(--on-surface);
     font-size: 14px;
-    line-height: 1.65;
+    line-height: 1.7;
+    word-break: break-word;
 }
 
-/* Timestamp under each message */
 .msg-time {
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -309,33 +310,18 @@ body {
     padding: 0 4px;
 }
 
-/* Content styles inside bubbles */
-.bubble strong  { color: var(--primary); font-weight: 600; }
-.bubble em      { color: var(--on-surface-variant); }
-.bubble hr      { border: none; border-top: 1px solid var(--outline); margin: 10px 0; }
+/* Bubble content styles */
+.bubble strong { color: var(--primary); font-weight: 600; }
+.bubble em     { color: var(--on-surface-variant); }
+.bubble hr     { border: none; border-top: 1px solid var(--outline); margin: 10px 0; }
 
-/* AI badge */
-.ai-badge {
-    display: inline-block;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--secondary-text);
-    border: 1px solid var(--outline);
-    padding: 2px 8px;
-    border-radius: var(--r-sm);
-    margin-bottom: 8px;
-}
-
-/* Dept tags inside bubbles */
+/* Dept tags */
 .dept-tag {
     display: inline-block;
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--secondary-text);
     border: 1px solid var(--outline);
@@ -348,69 +334,67 @@ body {
 .quick-replies {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 8px;
     padding: 4px 0 0 0;
     align-self: flex-start;
+    max-width: 100%;
 }
-
 .quick-btn {
+    /* 36px touch target */
+    height: 36px;
+    display: flex;
+    align-items: center;
     background: var(--glass-fill);
     border: 1px solid var(--glass-border);
     color: var(--on-surface-variant);
-    padding: 5px 14px;
+    padding: 0 14px;
     border-radius: var(--r-md);
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-family: var(--font-body);
+    font-size: 13px;
     cursor: pointer;
     transition: background .15s, color .15s;
-    font-family: var(--font-body);
-    text-transform: none;
-    letter-spacing: normal;
-    font-size: 12px;
+    white-space: nowrap;
 }
-.quick-btn:hover {
+.quick-btn:active {
     background: rgba(255,255,255,.1);
     color: var(--primary);
-    border-color: rgba(255,255,255,.25);
 }
 
-/* ── Typing indicator ───────────────────────────── */
+/* ── Typing indicator (blinking cursor) ─────────── */
 #typing-indicator .bubble {
     display: flex;
     align-items: center;
-    height: 48px;
-    padding: 14px 18px;
+    min-height: 46px;
 }
-
 .cursor-block {
     width: 8px; height: 18px;
     background: var(--primary);
-    animation: blink-block 1s step-end infinite;
     border-radius: 1px;
+    animation: blink 1s step-end infinite;
 }
-
-@keyframes blink-block {
+@keyframes blink {
     0%, 100% { opacity: 1; }
     50%       { opacity: 0; }
 }
 
 /* ── Input bar ──────────────────────────────────── */
 .input-bar {
+    /* Fixed at bottom, above home indicator */
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    z-index: 40;
-    background: rgba(0,0,0,.50);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
+    z-index: 50;
+    background: rgba(0,0,0,.75);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
     border-top: 1px solid var(--glass-border);
-    padding: 14px var(--gutter);
+    /* Respect home indicator */
+    padding-bottom: max(14px, var(--safe-bottom));
+    padding-top: 12px;
+    padding-left: max(var(--gutter), var(--safe-left));
+    padding-right: max(var(--gutter), var(--safe-right));
     display: flex;
     align-items: center;
-    gap: var(--unit);
-    max-width: 100%;
+    gap: 10px;
 }
 
 .input-wrap {
@@ -420,16 +404,16 @@ body {
     gap: 6px;
     background: var(--glass-fill);
     border: 1px solid var(--glass-border);
-    border-top-color: rgba(255,255,255,.22);
+    border-top-color: rgba(255,255,255,.20);
     border-radius: var(--r-lg);
-    padding: 12px 18px;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    padding: 0 16px;
+    min-height: 46px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     transition: border-color .2s;
 }
-
 .input-wrap:focus-within {
-    border-color: rgba(255,255,255,.28);
+    border-color: rgba(255,255,255,.30);
 }
 
 #userInput {
@@ -439,27 +423,23 @@ body {
     outline: none;
     color: var(--on-surface);
     font-family: var(--font-body);
-    font-size: 14px;
+    /* 16px MINIMUM prevents iOS auto-zoom on focus */
+    font-size: 16px;
     line-height: 1.5;
-    caret-color: transparent; /* use custom cursor */
+    caret-color: var(--primary);
+    /* Remove iOS default styling */
+    -webkit-appearance: none;
+    appearance: none;
 }
-
 #userInput::placeholder { color: var(--secondary-text); }
 
-.cursor-blink {
-    width: 2px; height: 16px;
-    background: var(--primary);
-    border-radius: 1px;
-    flex-shrink: 0;
-    animation: blink-block 1s step-end infinite;
-    opacity: 0;
-    transition: opacity .1s;
-}
+/* Hide the blinking cursor div on mobile — use native caret */
+.cursor-blink { display: none; }
 
-.input-wrap:focus-within .cursor-blink { opacity: 1; }
-
+/* Send button — 46px touch target */
 .send-btn {
     width: 46px; height: 46px;
+    min-width: 46px;
     border-radius: var(--r-full);
     background: var(--primary);
     color: var(--on-primary);
@@ -468,14 +448,13 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background .15s, transform .1s;
+    transition: transform .1s, background .15s;
     flex-shrink: 0;
 }
-.send-btn:hover  { background: rgba(255,255,255,.85); }
-.send-btn:active { transform: scale(.93); }
+.send-btn:active { transform: scale(.92); background: rgba(255,255,255,.85); }
 .send-btn .material-symbols-outlined { font-size: 20px; }
 
-/* ── Error state ────────────────────────────────── */
+/* ── Error ───────────────────────────────────────── */
 .error-msg {
     color: #ffb4ab;
     font-size: 13px;
@@ -485,12 +464,46 @@ body {
     letter-spacing: 0.05em;
 }
 
-/* ── Responsive ─────────────────────────────────── */
+/* ── Desktop enhancements (≥640px) ─────────────── */
 @media (min-width: 640px) {
-    body { font-size: 16px; }
-    .chat-stream { padding: 92px var(--pad) 120px; }
+    :root {
+        --topbar-h:   64px;
+        --inputbar-h: 78px;
+        --gutter:     24px;
+        --pad:        24px;
+    }
+
+    body { font-size: 15px; }
+
+    .brand h1    { font-size: 20px; }
+    .icon-btn    { min-width: 40px; min-height: 40px; }
+    .icon-btn:hover { background: rgba(255,255,255,.08); color: var(--primary); }
+
     .msg { max-width: 72%; }
-    .input-bar { padding: 16px var(--pad); }
-    .brand h1 { font-size: 22px; }
-    #userInput { font-size: 15px; }
+    .msg.bot  .bubble,
+    .msg.user .bubble { font-size: 14.5px; }
+
+    /* Show blinking cursor on desktop */
+    .cursor-blink {
+        display: block;
+        width: 2px; height: 16px;
+        background: var(--primary);
+        border-radius: 1px;
+        flex-shrink: 0;
+        animation: blink 1s step-end infinite;
+        opacity: 0;
+        transition: opacity .1s;
+    }
+    .input-wrap:focus-within .cursor-blink { opacity: 1; }
+
+    /* Standard caret hidden on desktop, use cursor-blink instead */
+    #userInput { font-size: 14px; caret-color: transparent; }
+
+    .send-btn:hover { background: rgba(255,255,255,.85); }
+}
+
+/* ── Large screens (≥1024px) ────────────────────── */
+@media (min-width: 1024px) {
+    :root { --max-w: 760px; }
+    .msg { max-width: 65%; }
 }

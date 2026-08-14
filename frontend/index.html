@@ -2,7 +2,12 @@
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Mobile: no zoom, viewport-fit=cover for notch/home-indicator safe areas -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Campus Connect — UEM Kolkata</title>
     <meta name="description" content="Campus Connect is the official AI assistant for UEM Kolkata. Find sections, faculty cabins, and room locations." />
 
@@ -20,32 +25,32 @@
     <div class="drifting-dots"></div>
 
     <!-- Ambient blobs -->
-    <div class="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
-        <div class="ambient-blob" style="width:400px;height:400px;top:-15%;left:-10%;"></div>
-        <div class="ambient-blob" style="width:500px;height:500px;bottom:-20%;right:-10%;background:#a0a0a0;"></div>
+    <div class="blobs-layer">
+        <div class="ambient-blob blob-top"></div>
+        <div class="ambient-blob blob-bottom"></div>
     </div>
 
     <!-- ── Header ── -->
     <header class="top-bar">
-        <button class="icon-btn" id="menuBtn" aria-label="Menu" title="Quick topics">
+        <button class="icon-btn" id="menuBtn" aria-label="Quick topics">
             <span class="material-symbols-outlined">blur_on</span>
         </button>
         <div class="brand">
             <h1>Campus Connect</h1>
-            <div class="pulse-dot" id="statusDot"></div>
+            <div class="pulse-dot"></div>
         </div>
-        <button class="icon-btn" id="settingsBtn" aria-label="Settings" title="UEM Kolkata">
+        <button class="icon-btn" id="settingsBtn" aria-label="UEM Kolkata">
             <span class="material-symbols-outlined">school</span>
         </button>
     </header>
 
-    <!-- ── Suggested prompt chips (shown below header on menu tap) ── -->
+    <!-- ── Collapsible chips bar ── -->
     <div class="chips-bar" id="chipsBar">
-        <button class="chip" onclick="window.UI.quickSend('Where is Section A?')">📍 Sections</button>
-        <button class="chip" onclick="window.UI.quickSend('Show all Physics faculty')">👨‍🏫 Faculty</button>
-        <button class="chip" onclick="window.UI.quickSend('Where is the library?')">📚 Library</button>
-        <button class="chip" onclick="window.UI.quickSend('Where is the cafeteria?')">🍽️ Cafeteria</button>
-        <button class="chip" onclick="window.UI.quickSend('Who are the mentors for Section E?')">🧑‍🏫 Mentors</button>
+        <button class="chip" onclick="UI.quickSend('Where is Section A?')">📍 Sections</button>
+        <button class="chip" onclick="UI.quickSend('Show all Physics faculty')">👨‍🏫 Faculty</button>
+        <button class="chip" onclick="UI.quickSend('Where is the library?')">📚 Library</button>
+        <button class="chip" onclick="UI.quickSend('Where is the cafeteria?')">🍽️ Cafeteria</button>
+        <button class="chip" onclick="UI.quickSend('Who are the mentors for Section E?')">🧑‍🏫 Mentors</button>
     </div>
 
     <!-- ── Chat stream ── -->
@@ -57,8 +62,13 @@
             <input
                 id="userInput"
                 type="text"
+                inputmode="text"
+                enterkeyhint="send"
                 placeholder="Ask about sections, faculty, rooms…"
                 autocomplete="off"
+                autocorrect="off"
+                autocapitalize="sentences"
+                spellcheck="false"
             />
             <div class="cursor-blink"></div>
         </div>
@@ -82,6 +92,19 @@
             document.getElementById('menuBtn').addEventListener('click', () => {
                 document.getElementById('chipsBar').classList.toggle('open');
             });
+
+            // Close chips bar when tapping outside
+            document.getElementById('chatMessages').addEventListener('click', () => {
+                document.getElementById('chipsBar').classList.remove('open');
+            });
+
+            // iOS keyboard: scroll to bottom when keyboard opens
+            if ('visualViewport' in window) {
+                window.visualViewport.addEventListener('resize', () => {
+                    const stream = document.getElementById('chatMessages');
+                    stream.scrollTop = stream.scrollHeight;
+                });
+            }
         });
     </script>
 </body>
