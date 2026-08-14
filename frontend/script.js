@@ -452,8 +452,11 @@ const UI = {
     },
 
     _scrollToBottom() {
+        // Double rAF: first frame schedules, second fires after layout is painted
         requestAnimationFrame(() => {
-            this.msgEl.scrollTop = this.msgEl.scrollHeight;
+            requestAnimationFrame(() => {
+                this.msgEl.scrollTop = this.msgEl.scrollHeight;
+            });
         });
     },
 

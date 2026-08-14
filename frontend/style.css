@@ -69,7 +69,7 @@ body {
     letter-spacing: 0.01em;
     color: var(--on-surface);
     background: var(--bg);
-    min-height: 100dvh;
+    height: 100dvh;          /* fixed height — required for flex scroll to work */
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -234,15 +234,15 @@ body {
 /* ── Chat stream ────────────────────────────────── */
 .chat-stream {
     flex: 1;
+    min-height: 0;           /* CRITICAL: lets flex child shrink and scroll */
     overflow-y: auto;
-    padding: 88px var(--gutter) 120px;
+    padding: 80px var(--gutter) 100px;
     display: flex;
     flex-direction: column;
     gap: 20px;
     max-width: var(--max-w);
     width: 100%;
     margin: 0 auto;
-    /* No scroll-behavior:smooth — instant scroll for reliability */
     scrollbar-width: none;
     overscroll-behavior: contain;
 }
