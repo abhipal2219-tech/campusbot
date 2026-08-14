@@ -302,7 +302,7 @@ const SearchEngine = {
         // 6. Backend AI call (Render/Groq)
         const aiReply = await this._callBackend(rawInput);
         if (aiReply) {
-            const reply = '<div class="ai-badge">✨ AI Answer</div><br>' + this._formatAI(aiReply);
+            const reply = this._formatAI(aiReply);
             this._addToHistory('assistant', reply);
             return reply;
         }
@@ -419,7 +419,7 @@ const UI = {
         wrap.appendChild(bub);
         wrap.appendChild(time);
         this.msgEl.appendChild(wrap);
-        this.msgEl.scrollTop = this.msgEl.scrollHeight;
+        this._scrollToBottom();
     },
 
     addChips(chips) {
@@ -433,7 +433,7 @@ const UI = {
             div.appendChild(btn);
         });
         this.msgEl.appendChild(div);
-        this.msgEl.scrollTop = this.msgEl.scrollHeight;
+        this._scrollToBottom();
     },
 
     showTyping() {
@@ -448,7 +448,13 @@ const UI = {
 
         w.appendChild(bub);
         this.msgEl.appendChild(w);
-        this.msgEl.scrollTop = this.msgEl.scrollHeight;
+        this._scrollToBottom();
+    },
+
+    _scrollToBottom() {
+        requestAnimationFrame(() => {
+            this.msgEl.scrollTop = this.msgEl.scrollHeight;
+        });
     },
 
     hideTyping() {

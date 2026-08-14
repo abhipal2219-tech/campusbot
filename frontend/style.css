@@ -82,31 +82,26 @@ body {
     z-index: -1;
     pointer-events: none;
     background-image:
-        radial-gradient(circle at 10% 20%, rgba(255,255,255,.15) 1px,   transparent 1px),
-        radial-gradient(circle at 70% 60%, rgba(255,255,255,.20) 1.5px, transparent 1.5px),
-        radial-gradient(circle at 40% 90%, rgba(255,255,255,.10) 1px,   transparent 1px),
-        radial-gradient(circle at 90% 10%, rgba(255,255,255,.25) 0.5px, transparent 0.5px),
-        radial-gradient(circle at 30% 40%, rgba(255,255,255,.15) 1.5px, transparent 1.5px),
-        radial-gradient(circle at 80% 80%, rgba(255,255,255,.10) 2px,   transparent 2px),
-        radial-gradient(circle at 50% 50%, rgba(255,255,255,.20) 1px,   transparent 1px);
+        radial-gradient(circle at 10% 20%, rgba(255,255,255,.12) 1px,   transparent 1px),
+        radial-gradient(circle at 70% 60%, rgba(255,255,255,.16) 1.5px, transparent 1.5px),
+        radial-gradient(circle at 40% 90%, rgba(255,255,255,.08) 1px,   transparent 1px),
+        radial-gradient(circle at 90% 10%, rgba(255,255,255,.20) 0.5px, transparent 0.5px),
+        radial-gradient(circle at 30% 40%, rgba(255,255,255,.12) 1.5px, transparent 1.5px),
+        radial-gradient(circle at 80% 80%, rgba(255,255,255,.08) 2px,   transparent 2px),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,.16) 1px,   transparent 1px);
     background-size: 45px 45px, 60px 60px, 50px 50px, 30px 30px, 70px 70px, 90px 90px, 40px 40px;
-    animation: drift-bg 120s linear infinite;
 }
 
-@keyframes drift-bg {
-    0%   { background-position: 0 0,    0 0,    0 0,      0 0,      0 0,      0 0,     0 0; }
-    100% { background-position: 450px 450px, 600px 600px, -500px 500px, 300px -300px, -700px -700px, 900px 900px, -400px 400px; }
-}
-
-/* Ambient blobs */
+/* Ambient blobs — GPU friendly via opacity only */
 .ambient-blob {
     position: absolute;
     border-radius: 50%;
     filter: blur(80px);
-    opacity: 0.12;
+    opacity: 0.08;
     z-index: -1;
     pointer-events: none;
     background: #ffffff;
+    will-change: opacity;
 }
 
 /* ── Glass utilities ────────────────────────────── */
@@ -247,7 +242,9 @@ body {
     max-width: var(--max-w);
     width: 100%;
     margin: 0 auto;
+    /* No scroll-behavior:smooth — instant scroll for reliability */
     scrollbar-width: none;
+    overscroll-behavior: contain;
 }
 .chat-stream::-webkit-scrollbar { display: none; }
 
