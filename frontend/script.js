@@ -90,6 +90,7 @@ const SearchEngine = {
     faculty:  [],
     rooms:    [],
     sections: [],
+    schedule: [],
     ragDB:    new VectorStore(),
 
     // ── Conversation memory ──
@@ -123,14 +124,16 @@ const SearchEngine = {
     //    but fetched from the same origin on GitHub Pages) ──
     async init() {
         try {
-            const [f, r, s] = await Promise.all([
+            const [f, r, s, sched] = await Promise.all([
                 fetch('data/faculty.json').then(res => { if (!res.ok) throw new Error(); return res.json(); }),
                 fetch('data/rooms.json').then(res => { if (!res.ok) throw new Error(); return res.json(); }),
                 fetch('data/sections.json').then(res => { if (!res.ok) throw new Error(); return res.json(); }),
+                fetch('data/iot_2b_schedule.json').then(res => res.ok ? res.json() : null).catch(() => null),
             ]);
             this.faculty  = f;
             this.rooms    = r;
             this.sections = s;
+            this.schedule = sched ? (sched.schedule || []) : [];
             this._buildRAG();
             return true;
         } catch (e) {
@@ -160,7 +163,99 @@ const SearchEngine = {
                 { type: 'section', ...s }
             );
         });
+        // IoT 2B Schedule
+        this.schedule.forEach(e => {
+            if (!e.subject || e.subject === 'BREAK' || e.subject === 'EAA') return;
+            const fac = (e.faculty || []).join(', ') || 'TBA';
+            this.ragDB.addDoc(
+                `IoT 2B ${e.day} period ${e.period} ${e.time}: ${e.subject}. Faculty: ${fac}. Room: ${e.room || 'TBA'}.`,
+                { type: 'schedule', ...e }
+            );
+        });
     },
+
+    // ── Schedule query handler ──────────────────────────────────────────────
+    _handleSchedule(input) {
+        if (!this.schedule.length) return null;
+        const q = input.toLowerCase();
+
+        const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+        const matchedDay = days.find(d => q.includes(d));
+
+        // Subject keyword search
+        const subjectKeywords = ['dsa','data structure','analog','digital','mathematics','math',
+            'management','pre-placement','placement','it workshop','workshop','esep',
+            'technical skill','iot','skill development'];
+        const matchedSubject = subjectKeywords.find(k => q.includes(k));
+
+        let entries = this.schedule.filter(e =>
+            e.subject !== 'BREAK' && e.subject !== 'EAA'
+        );
+
+        // Filter by day if mentioned
+        if (matchedDay) {
+            entries = entries.filter(e => e.day.toLowerCase() === matchedDay);
+        }
+
+        // Filter by subject if mentioned
+        if (matchedSubject) {
+            entries = entries.filter(e =>
+                e.subject.toLowerCase().includes(matchedSubject)
+            );
+        }
+
+        // "full schedule" / "timetable" / "all classes"
+        const wantsAll = /schedule|timetable|all class|weekly|routine/i.test(input);
+
+        if (!matchedDay && !matchedSubject && !wantsAll) return null;
+        if (!entries.length) return `😔 No classes found for IoT 2B matching that query.`;
+
+        // Full day schedule
+        if (matchedDay && !matchedSubject) {
+            const dayName = matchedDay.charAt(0).toUpperCase() + matchedDay.slice(1);
+            const rows = entries.map(e => {
+                const fac = (e.faculty || []).join(', ') || 'TBA';
+                return `<strong>P${e.period}</strong> ${e.time} — ${e.subject}<br>` +
+                       `&nbsp;&nbsp;📍 ${e.room || 'TBA'} &nbsp;|&nbsp; 👨‍🏫 ${fac}`;
+            }).join('<hr>');
+            return `📅 <strong>IoT 2B — ${dayName}</strong><br><br>${rows}`;
+        }
+
+        // Subject search across days
+        if (matchedSubject && !matchedDay) {
+            const rows = entries.map(e => {
+                const fac = (e.faculty || []).join(', ') || 'TBA';
+                return `<strong>${e.day}</strong> P${e.period} (${e.time})<br>` +
+                       `&nbsp;&nbsp;📍 ${e.room || 'TBA'} &nbsp;|&nbsp; 👨‍🏫 ${fac}`;
+            }).join('<hr>');
+            return `📚 <strong>${entries[0].subject}</strong> — IoT 2B<br><br>${rows}`;
+        }
+
+        // Specific day + subject
+        if (matchedDay && matchedSubject && entries.length) {
+            const e   = entries[0];
+            const fac = (e.faculty || []).join(', ') || 'TBA';
+            return `📅 <strong>${e.subject}</strong> on <strong>${e.day}</strong><br><br>` +
+                   `🕐 ${e.time} (Period ${e.period})<br>` +
+                   `📍 Room: <strong>${e.room || 'TBA'}</strong><br>` +
+                   `👨‍🏫 Faculty: <strong>${fac}</strong>`;
+        }
+
+        // Full weekly timetable
+        const byDay = {};
+        entries.forEach(e => {
+            if (!byDay[e.day]) byDay[e.day] = [];
+            byDay[e.day].push(e);
+        });
+        const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+        const lines = dayOrder.filter(d => byDay[d]).map(d => {
+            const classes = byDay[d].map(e => `P${e.period} ${e.time}: ${e.subject}`).join(' | ');
+            return `<strong>${d}:</strong> ${classes}`;
+        }).join('<br>');
+        return `📅 <strong>IoT 2B — Weekly Schedule</strong><br><br>${lines}`;
+    },
+
+
 
     norm(s) {
         return s.toLowerCase().replace(/[.\-\/]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -299,7 +394,14 @@ const SearchEngine = {
             if (parts.length) return parts.join('<hr>');
         }
 
-        // 6. Backend AI call (Render/Groq)
+        // 6. Schedule query (IoT 2B)
+        const schedReply = this._handleSchedule(input);
+        if (schedReply) {
+            this._addToHistory('assistant', schedReply);
+            return schedReply;
+        }
+
+        // 7. Backend AI call (Render/Groq)
         const aiReply = await this._callBackend(rawInput);
         if (aiReply) {
             const reply = this._formatAI(aiReply);

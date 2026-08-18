@@ -156,6 +156,32 @@ def build_knowledge_base() -> VectorStore:
         )
         db.add_document(text, {"type": "section", **entry})
 
+    # IoT 2B Weekly Schedule
+    schedule_path = os.path.join(DATA_DIR, "iot_2b_schedule.json")
+    if os.path.exists(schedule_path):
+        with open(schedule_path, encoding="utf-8") as f:
+            schedule_data = json.load(f)
+        for entry in schedule_data.get("schedule", []):
+            if entry.get("subject") in ("BREAK", "EAA") or not entry.get("subject"):
+                continue
+            faculty_str = ", ".join(entry.get("faculty", [])) or "TBA"
+            room_str    = entry.get("room") or "TBA"
+            text = (
+                f"IoT 2B schedule: On {entry['day']} period {entry['period']} "
+                f"({entry['time']}), subject is {entry['subject']}. "
+                f"Faculty: {faculty_str}. Room: {room_str}."
+            )
+            db.add_document(text, {
+                "type":    "schedule",
+                "class":   "IoT 2B",
+                "day":     entry["day"],
+                "period":  entry["period"],
+                "time":    entry["time"],
+                "subject": entry["subject"],
+                "faculty": entry.get("faculty", []),
+                "room":    room_str,
+            })
+
     db.build_index()
     print(f"[READY] Knowledge base: {len(db.documents)} documents indexed.")
     return db

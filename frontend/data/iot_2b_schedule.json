@@ -1,0 +1,546 @@
+{
+  "class": "IoT 2B",
+  "schedule": [
+    {
+      "class": "IoT 2B",
+      "day": "Monday",
+      "period": 1,
+      "time": "09:30-10:15",
+      "subject": "Technical Skill Development",
+      "faculty": [
+        "MNC"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Monday",
+      "period": 2,
+      "time": "10:15-11:00",
+      "subject": "Technical Skill Development",
+      "faculty": [
+        "MNC"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Monday",
+      "period": 3,
+      "time": "11:00-11:45",
+      "subject": "Data Structures and Algorithms",
+      "faculty": [
+        "PB"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Monday",
+      "period": 4,
+      "time": "11:45-12:30",
+      "subject": "Analog Electronic Circuits",
+      "faculty": [
+        "SRN"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Monday",
+      "period": "BREAK",
+      "time": "12:30-13:15",
+      "subject": "BREAK",
+      "faculty": [],
+      "room": null
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Monday",
+      "period": 5,
+      "time": "13:15-14:00",
+      "subject": "Digital Electronic Circuits",
+      "faculty": [
+        "SGH"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Monday",
+      "period": 6,
+      "time": "14:00-14:45",
+      "subject": "ESEP III",
+      "faculty": [
+        "ARC"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Monday",
+      "period": 7,
+      "time": "14:45-15:30",
+      "subject": "ESEP III",
+      "faculty": [
+        "ARC"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Monday",
+      "period": 8,
+      "time": "15:30-16:15",
+      "subject": "Pre-Placement Training",
+      "faculty": [
+        "PB"
+      ],
+      "room": "B2 LG 2.8"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Monday",
+      "period": 9,
+      "time": "16:15-17:00",
+      "subject": "EAA",
+      "faculty": [],
+      "room": null
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Tuesday",
+      "period": 1,
+      "time": "09:30-10:15",
+      "subject": "Analog Electronic Circuits",
+      "faculty": [
+        "PRN"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Tuesday",
+      "period": 2,
+      "time": "10:15-11:00",
+      "subject": "Principles of Management",
+      "faculty": [
+        "SDA"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Tuesday",
+      "period": 3,
+      "time": "11:00-11:45",
+      "subject": "Principles of Management",
+      "faculty": [
+        "SDA"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Tuesday",
+      "period": 4,
+      "time": "11:45-12:30",
+      "subject": "Pre-Placement Training",
+      "faculty": [
+        "RJD"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Tuesday",
+      "period": "BREAK",
+      "time": "12:30-13:15",
+      "subject": "BREAK",
+      "faculty": [],
+      "room": null
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Tuesday",
+      "period": 5,
+      "time": "13:15-14:00",
+      "subject": "Mathematics III",
+      "faculty": [
+        "SNG"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Tuesday",
+      "period": 6,
+      "time": "14:00-14:45",
+      "subject": "Digital Electronic Circuits Laboratory",
+      "faculty": [
+        "SGH",
+        "SRN",
+        "SCS"
+      ],
+      "room": "B2 LG 0.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Tuesday",
+      "period": 7,
+      "time": "14:45-15:30",
+      "subject": "Digital Electronic Circuits Laboratory",
+      "faculty": [
+        "SGH",
+        "SRN",
+        "SCS"
+      ],
+      "room": "B2 LG 0.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Tuesday",
+      "period": 8,
+      "time": "15:30-16:15",
+      "subject": "Digital Electronic Circuits Laboratory",
+      "faculty": [
+        "SGH",
+        "AYC",
+        "SCS"
+      ],
+      "room": "B2 LG 0.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Tuesday",
+      "period": 9,
+      "time": "16:15-17:00",
+      "subject": "EAA",
+      "faculty": [],
+      "room": null
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Wednesday",
+      "period": 1,
+      "time": "09:30-10:15",
+      "subject": "Analog Electronic Circuits Laboratory",
+      "faculty": [
+        "RJD",
+        "PRN",
+        "SCS"
+      ],
+      "room": "B3 LG 3.9"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Wednesday",
+      "period": 2,
+      "time": "10:15-11:00",
+      "subject": "Analog Electronic Circuits Laboratory",
+      "faculty": [
+        "RJD",
+        "PRN",
+        "SCS"
+      ],
+      "room": "B3 LG 3.9"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Wednesday",
+      "period": 3,
+      "time": "11:00-11:45",
+      "subject": "Pre-Placement Training",
+      "faculty": [
+        "SG"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Wednesday",
+      "period": 4,
+      "time": "11:45-12:30",
+      "subject": "Data Structures and Algorithms",
+      "faculty": [
+        "MMD"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Wednesday",
+      "period": "BREAK",
+      "time": "12:30-13:15",
+      "subject": "BREAK",
+      "faculty": [],
+      "room": null
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Wednesday",
+      "period": 5,
+      "time": "13:15-14:00",
+      "subject": "Pre-Placement Training",
+      "faculty": [
+        "SCH"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Wednesday",
+      "period": 6,
+      "time": "14:00-14:45",
+      "subject": "Digital Electronic Circuits",
+      "faculty": [
+        "SGH"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Wednesday",
+      "period": 7,
+      "time": "14:45-15:30",
+      "subject": "Pre-Placement Training",
+      "faculty": [],
+      "room": "RRR Hall"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Wednesday",
+      "period": 8,
+      "time": "15:30-16:15",
+      "subject": "Pre-Placement Training",
+      "faculty": [],
+      "room": "RRR Hall"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Wednesday",
+      "period": 9,
+      "time": "16:15-17:00",
+      "subject": "EAA",
+      "faculty": [],
+      "room": null
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Thursday",
+      "period": 1,
+      "time": "09:30-10:15",
+      "subject": "IT Workshop Laboratory",
+      "faculty": [
+        "RSG",
+        "AYC"
+      ],
+      "room": "B3 LG 2.8"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Thursday",
+      "period": 2,
+      "time": "10:15-11:00",
+      "subject": "IT Workshop Laboratory",
+      "faculty": [
+        "RSG",
+        "AYC"
+      ],
+      "room": "B3 LG 2.8"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Thursday",
+      "period": 3,
+      "time": "11:00-11:45",
+      "subject": "Pre-Placement Training",
+      "faculty": [
+        "SG"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Thursday",
+      "period": 4,
+      "time": "11:45-12:30",
+      "subject": "Analog Electronic Circuits",
+      "faculty": [
+        "RJD"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Thursday",
+      "period": "BREAK",
+      "time": "12:30-13:15",
+      "subject": "BREAK",
+      "faculty": [],
+      "room": null
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Thursday",
+      "period": 5,
+      "time": "13:15-14:00",
+      "subject": "Data Structures Laboratory",
+      "faculty": [
+        "MMD",
+        "PRN"
+      ],
+      "room": "B3 LG 2.7"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Thursday",
+      "period": 6,
+      "time": "14:00-14:45",
+      "subject": "Data Structures Laboratory",
+      "faculty": [
+        "MMD",
+        "PRN"
+      ],
+      "room": "B3 LG 2.7"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Thursday",
+      "period": 7,
+      "time": "14:45-15:30",
+      "subject": "Data Structures Laboratory",
+      "faculty": [
+        "MMD",
+        "PRN"
+      ],
+      "room": "B3 LG 2.7"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Thursday",
+      "period": 8,
+      "time": "15:30-16:15",
+      "subject": "Pre-Placement Training",
+      "faculty": [
+        "SKB"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Thursday",
+      "period": 9,
+      "time": "16:15-17:00",
+      "subject": "EAA",
+      "faculty": [],
+      "room": null
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Friday",
+      "period": 1,
+      "time": "09:30-10:15",
+      "subject": "Analog Electronic Circuits",
+      "faculty": [
+        "SRN"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Friday",
+      "period": 2,
+      "time": "10:15-11:00",
+      "subject": "Pre-Placement Training",
+      "faculty": [
+        "SPG"
+      ],
+      "room": "B3 LG 2.8"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Friday",
+      "period": 3,
+      "time": "11:00-11:45",
+      "subject": "Data Structures and Algorithms",
+      "faculty": [
+        "MMD"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Friday",
+      "period": 4,
+      "time": "11:45-12:30",
+      "subject": "Digital Electronic Circuits",
+      "faculty": [
+        "AYC"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Friday",
+      "period": "BREAK",
+      "time": "12:30-13:15",
+      "subject": "BREAK",
+      "faculty": [],
+      "room": null
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Friday",
+      "period": 5,
+      "time": "13:15-14:00",
+      "subject": "Digital Electronic Circuits",
+      "faculty": [
+        "AYC"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Friday",
+      "period": 6,
+      "time": "14:00-14:45",
+      "subject": "Mathematics III",
+      "faculty": [
+        "SNG"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Friday",
+      "period": 7,
+      "time": "14:45-15:30",
+      "subject": "Mathematics III",
+      "faculty": [
+        "SNG"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Friday",
+      "period": 8,
+      "time": "15:30-16:15",
+      "subject": "Pre-Placement Training",
+      "faculty": [
+        "SBD"
+      ],
+      "room": "B3 LG 4.6"
+    },
+    {
+      "class": "IoT 2B",
+      "day": "Friday",
+      "period": 9,
+      "time": "16:15-17:00",
+      "subject": "EAA",
+      "faculty": [],
+      "room": null
+    }
+  ]
+}
