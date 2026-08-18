@@ -232,10 +232,7 @@ const SearchEngine = {
 
         // ── Single period result ─────────────────────────────────
         if (matchedPeriod) {
-            // If no day was explicitly mentioned, skip → let backend use real IST date
-            if (!matchedDay) return null;
-
-
+            if (entries.length === 1) {
                 const e   = entries[0];
                 const fac = (e.faculty || []).join(', ') || 'TBA';
                 return `🕐 <strong>Period ${e.period}</strong> — ${e.day}<br><br>` +
