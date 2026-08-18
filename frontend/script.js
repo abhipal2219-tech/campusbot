@@ -8,8 +8,9 @@
 
 // ── Backend URL ────────────────────────────────────────
 // Replace this with your Render service URL after deploying.
-// e.g. "https://campusbot-xyz.onrender.com"
-const BACKEND_URL = 'https://campusbot-vqvx.onrender.com';
+const BACKEND_URL = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+    ? 'http://localhost:10000'
+    : 'https://campusbot-vqvx.onrender.com';
 
 // =======================================================
 // 1. VectorStore — client-side TF-IDF search
@@ -174,125 +175,210 @@ const SearchEngine = {
         });
     },
 
+    // ── Helper to get current weekday name in IST ──────────────────────────
+    _getISTDate(offsetDays = 0) {
+        const d = new Date();
+        if (offsetDays !== 0) d.setDate(d.getDate() + offsetDays);
+        return d.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'Asia/Kolkata' });
+    },
+
     // ── Schedule query handler ──────────────────────────────────────────────
     _handleSchedule(input) {
         if (!this.schedule.length) return null;
         const q = input.toLowerCase();
 
-        // ── Detect day ──────────────────────────────────────────
-        const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-        const matchedDay = days.find(d => q.includes(d));
-
-        // ── Detect period number ────────────────────────────────
-        // handles: "2nd period", "period 2", "p2", "2nd", "second period" etc.
-        const ordinals = ['first','second','third','fourth','fifth','sixth','seventh','eighth','ninth'];
-        const ordinalNums = { first:1,second:2,third:3,fourth:4,fifth:5,sixth:6,seventh:7,eighth:8,ninth:9 };
+        // 1. Detect period number (handles "3 rd period", "3rd period", "3 period", "period 3", "p3", "3 rd class", "third period", etc.)
+        const ordinals = {
+            'first': 1, 'second': 2, 'third': 3, 'fourth': 4,
+            'fifth': 5, 'sixth': 6, 'seventh': 7, 'eighth': 8,
+            '1st': 1, '2nd': 2, '3rd': 3, '4th': 4,
+            '5th': 5, '6th': 6, '7th': 7, '8th': 8
+        };
         let matchedPeriod = null;
-
-        // "period 3" or "p3"
-        const numMatch = q.match(/\bperiod\s*(\d)\b|\bp\s*(\d)\b|(\d)(st|nd|rd|th)\s*period/);
+        const numMatch = q.match(/\b(?:period|class|slot|p)\s*(\d)\b|\b(\d)\s*(?:st|nd|rd|th)?\s*(?:period|class|slot)\b|\b(\d)\s*(?:st|nd|rd|th)\b/);
         if (numMatch) {
             matchedPeriod = parseInt(numMatch[1] || numMatch[2] || numMatch[3]);
         }
-        // "second period" / "3rd period"
         if (!matchedPeriod) {
-            const ordMatch = ordinals.find(o => q.includes(o + ' period') || q.includes('period ' + o));
-            if (ordMatch) matchedPeriod = ordinalNums[ordMatch];
-        }
-
-        // ── Detect subject keyword ──────────────────────────────
-        const subjectKeywords = ['dsa','data structure','analog','digital','mathematics','math',
-            'management','pre-placement','placement','it workshop','workshop','esep',
-            'technical skill','skill development'];
-        const matchedSubject = subjectKeywords.find(k => q.includes(k));
-
-        // ── Base filter (skip breaks) ───────────────────────────
-        let entries = this.schedule.filter(e =>
-            e.subject !== 'BREAK' && e.subject !== 'EAA'
-        );
-
-        // "full schedule" / "timetable" / "all classes"
-        const wantsAll = /\b(schedule|timetable|all class|weekly|routine)\b/i.test(input);
-
-        // Only handle if something schedule-related was detected
-        if (!matchedDay && !matchedSubject && !wantsAll && !matchedPeriod) return null;
-
-        // ── Apply filters ────────────────────────────────────────
-        if (matchedDay) {
-            entries = entries.filter(e => e.day.toLowerCase() === matchedDay);
-        }
-        if (matchedPeriod) {
-            entries = entries.filter(e => Number(e.period) === matchedPeriod);
-        }
-        if (matchedSubject) {
-            entries = entries.filter(e => e.subject.toLowerCase().includes(matchedSubject));
-        }
-
-        if (!entries.length) return `😔 No class found for IoT 2B matching that query.`;
-
-        // ── Single period result ─────────────────────────────────
-        if (matchedPeriod) {
-            if (entries.length === 1) {
-                const e   = entries[0];
-                const fac = (e.faculty || []).join(', ') || 'TBA';
-                return `🕐 <strong>Period ${e.period}</strong> — ${e.day}<br><br>` +
-                       `📚 <strong>${e.subject}</strong><br>` +
-                       `🕐 ${e.time}<br>` +
-                       `📍 Room: <strong>${e.room || 'TBA'}</strong><br>` +
-                       `👨‍🏫 Faculty: <strong>${fac}</strong>`;
+            for (const [word, num] of Object.entries(ordinals)) {
+                if (q.includes(`${word} period`) || q.includes(`period ${word}`) || q.includes(`${word} class`)) {
+                    matchedPeriod = num;
+                    break;
+                }
             }
-            // Multiple days for same period (no day specified)
-            const rows = entries.map(e => {
+        }
+
+        // 2. Detect explicit day
+        const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+        let matchedDay = null;
+        for (const d of days) {
+            if (q.includes(d)) {
+                matchedDay = d.charAt(0).toUpperCase() + d.slice(1);
+                break;
+            }
+        }
+
+        // 3. Detect relative date terms & general schedule keywords
+        const wantsAllDays  = /\b(all days|every day|whole week|weekly|routine|all day)\b/i.test(input);
+        const wantsToday    = /\b(today|now|current|this period|my class)\b/i.test(input);
+        const wantsTomorrow = /\b(tomorrow|next day)\b/i.test(input);
+        const wantsGeneral  = /\b(schedule|timetable|classes|routine)\b/i.test(input);
+
+        // 4. Detect Subject aliases
+        const subjectAliases = {
+            'dsa': ['data structure', 'dsa'],
+            'data structure': ['data structure', 'dsa'],
+            'analog': ['analog electronic circuits', 'analog'],
+            'digital': ['digital electronic circuits', 'digital'],
+            'math': ['mathematics', 'math'],
+            'mathematics': ['mathematics', 'math'],
+            'management': ['principles of management', 'management', 'pom'],
+            'placement': ['pre-placement training', 'placement', 'ppt'],
+            'pre-placement': ['pre-placement training', 'placement', 'ppt'],
+            'ppt': ['pre-placement training', 'placement', 'ppt'],
+            'workshop': ['it workshop', 'workshop'],
+            'it workshop': ['it workshop', 'workshop'],
+            'esep': ['esep'],
+            'skill': ['technical skill development', 'skill development', 'tsd'],
+            'technical skill': ['technical skill development', 'skill development', 'tsd'],
+            'tsd': ['technical skill development', 'skill development', 'tsd']
+        };
+
+        const subjectMatches = (entrySubj, key) => {
+            const sLow = entrySubj.toLowerCase();
+            const list = subjectAliases[key] || [key];
+            return list.some(a => sLow.includes(a));
+        };
+
+        let matchedSubject = null;
+        for (const kw of Object.keys(subjectAliases)) {
+            const regex = new RegExp(`\\b${kw}\\b`, 'i');
+            if (regex.test(input)) {
+                matchedSubject = kw;
+                break;
+            }
+        }
+
+        // Guard
+        const isSchedule = (
+            matchedPeriod !== null ||
+            matchedDay !== null ||
+            wantsToday ||
+            wantsTomorrow ||
+            (wantsGeneral && (q.includes('iot') || q.includes('2b') || q.includes('class') || q.includes('period') || q.includes('today') || q.includes('tomorrow'))) ||
+            (matchedSubject !== null && (q.includes('class') || q.includes('schedule') || q.includes('when') || q.includes('room') || q.includes('faculty') || q.includes('time') || q.includes('lab') || q.includes('timing')))
+        );
+        if (!isSchedule) return null;
+
+        const allValid = this.schedule.filter(e => e.subject !== 'BREAK' && e.subject !== 'EAA');
+
+        // Case 1: Subject query across all days (e.g. "when is DSA class")
+        if (matchedSubject && !matchedDay && !wantsToday && !wantsTomorrow) {
+            const matches = allValid.filter(e => subjectMatches(e.subject, matchedSubject));
+            if (matches.length) {
+                const rows = matches.map(e => {
+                    const fac = (e.faculty || []).join(', ') || 'TBA';
+                    return `<strong>${e.day}</strong> P${e.period} (${e.time}): <strong>${e.subject}</strong><br>` +
+                           `&nbsp;&nbsp;📍 Room: <strong>${e.room || 'TBA'}</strong> | 👨‍🏫 Faculty: <strong>${fac}</strong>`;
+                }).join('<hr>');
+                return `📚 <strong>${matches[0].subject} Schedule (IoT 2B)</strong><br><br>${rows}`;
+            }
+        }
+
+        // Case 2: Multi-day period query (e.g. "3rd period all days")
+        if (matchedPeriod !== null && wantsAllDays) {
+            const matches = allValid.filter(e => Number(e.period) === matchedPeriod);
+            if (matches.length) {
+                const rows = matches.map(e => {
+                    const fac = (e.faculty || []).join(', ') || 'TBA';
+                    return `<strong>${e.day}</strong> (${e.time}): <strong>${e.subject}</strong> (Room: ${e.room || 'TBA'}, Faculty: ${fac})`;
+                }).join('<hr>');
+                return `🕐 <strong>Period ${matchedPeriod} Across the Week (IoT 2B)</strong><br><br>${rows}`;
+            }
+        }
+
+        // Resolve target day
+        let targetDay = matchedDay;
+        let isToday = false;
+
+        if (!targetDay) {
+            if (wantsTomorrow) {
+                targetDay = this._getISTDate(1);
+            } else if (!wantsAllDays) {
+                targetDay = this._getISTDate(0);
+                isToday = true;
+            }
+        }
+
+        // Case 3: Weekend Handling
+        if (targetDay && (targetDay === 'Saturday' || targetDay === 'Sunday') && !wantsAllDays) {
+            const dayLabel = isToday ? `Today (${targetDay})` : targetDay;
+            return `📅 <strong>${dayLabel}</strong> — No classes scheduled for IoT 2B.<br>Enjoy your weekend! 🎉<br><br>💡 <em>Tip: Ask 'Monday schedule' to see upcoming classes.</em>`;
+        }
+
+        // Case 4: Single day schedule queries
+        if (targetDay && !wantsAllDays) {
+            const dayEntries = allValid.filter(e => e.day.toLowerCase() === targetDay.toLowerCase());
+            if (!dayEntries.length) {
+                return `😔 No schedule records found for IoT 2B on ${targetDay}.`;
+            }
+
+            // A: Specific Period
+            if (matchedPeriod !== null) {
+                const match = dayEntries.find(e => Number(e.period) === matchedPeriod);
+                if (!match) {
+                    return `😔 No Period ${matchedPeriod} scheduled for IoT 2B on ${targetDay}.`;
+                }
+                const fac = (match.faculty || []).join(', ') || 'TBA';
+                const dayText = isToday ? `Today (${targetDay})` : targetDay;
+                return `🕐 <strong>Period ${match.period}</strong> — ${dayText}<br><br>` +
+                       `📚 <strong>${match.subject}</strong><br>` +
+                       `⏰ <strong>Time:</strong> ${match.time}<br>` +
+                       `📍 <strong>Room:</strong> ${match.room || 'TBA'}<br>` +
+                       `👨‍🏫 <strong>Faculty:</strong> ${fac}`;
+            }
+
+            // B: Specific Subject on this day
+            if (matchedSubject) {
+                const subMatches = dayEntries.filter(e => subjectMatches(e.subject, matchedSubject));
+                if (subMatches.length) {
+                    const cards = subMatches.map(e => {
+                        const fac = (e.faculty || []).join(', ') || 'TBA';
+                        return `📚 <strong>${e.subject}</strong><br>` +
+                               `⏰ Period ${e.period} (${e.time})<br>` +
+                               `📍 Room: <strong>${e.room || 'TBA'}</strong> | 👨‍🏫 Faculty: <strong>${fac}</strong>`;
+                    }).join('<hr>');
+                    const dayText = isToday ? `Today (${targetDay})` : targetDay;
+                    return `📅 <strong>${dayText}</strong> — IoT 2B<br><br>${cards}`;
+                }
+            }
+
+            // C: Full Day Schedule
+            const rows = dayEntries.map(e => {
                 const fac = (e.faculty || []).join(', ') || 'TBA';
-                return `<strong>${e.day}</strong> (${e.time}) — ${e.subject}<br>` +
-                       `&nbsp;&nbsp;📍 ${e.room || 'TBA'} &nbsp;|&nbsp; 👨‍🏫 ${fac}`;
+                return `<strong>P${e.period}</strong> (${e.time}) : <strong>${e.subject}</strong><br>` +
+                       `&nbsp;&nbsp;📍 Room: ${e.room || 'TBA'} | 👨‍🏫 ${fac}`;
             }).join('<hr>');
-            return `🕐 <strong>Period ${matchedPeriod}</strong> — IoT 2B<br><br>${rows}`;
+            const header = `📅 <strong>IoT 2B Schedule — ${isToday ? 'Today (' + targetDay + ')' : targetDay}</strong>`;
+            return `${header}<br><br>${rows}`;
         }
 
-        // ── Full day schedule ────────────────────────────────────
-        if (matchedDay && !matchedSubject) {
-            const dayName = matchedDay.charAt(0).toUpperCase() + matchedDay.slice(1);
-            const rows = entries.map(e => {
-                const fac = (e.faculty || []).join(', ') || 'TBA';
-                return `<strong>P${e.period}</strong> ${e.time} — ${e.subject}<br>` +
-                       `&nbsp;&nbsp;📍 ${e.room || 'TBA'} &nbsp;|&nbsp; 👨‍🏫 ${fac}`;
+        // Case 5: Full weekly timetable
+        if (wantsGeneral || wantsAllDays) {
+            const byDay = {};
+            allValid.forEach(e => {
+                if (!byDay[e.day]) byDay[e.day] = [];
+                byDay[e.day].push(e);
+            });
+            const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const blocks = dayOrder.filter(d => byDay[d]).map(d => {
+                const items = byDay[d].map(e => `P${e.period} (${e.time}): ${e.subject} (${e.room || 'TBA'})`).join('<br> • ');
+                return `<strong>${d}</strong><br> • ${items}`;
             }).join('<hr>');
-            return `📅 <strong>IoT 2B — ${dayName}</strong><br><br>${rows}`;
+            return `📅 <strong>IoT 2B Weekly Timetable</strong><br><br>${blocks}`;
         }
 
-        // ── Subject across all days ──────────────────────────────
-        if (matchedSubject && !matchedDay) {
-            const rows = entries.map(e => {
-                const fac = (e.faculty || []).join(', ') || 'TBA';
-                return `<strong>${e.day}</strong> P${e.period} (${e.time})<br>` +
-                       `&nbsp;&nbsp;📍 ${e.room || 'TBA'} &nbsp;|&nbsp; 👨‍🏫 ${fac}`;
-            }).join('<hr>');
-            return `📚 <strong>${entries[0].subject}</strong> — IoT 2B<br><br>${rows}`;
-        }
-
-        // ── Day + subject ────────────────────────────────────────
-        if (matchedDay && matchedSubject) {
-            const e   = entries[0];
-            const fac = (e.faculty || []).join(', ') || 'TBA';
-            return `📅 <strong>${e.subject}</strong> on <strong>${e.day}</strong><br><br>` +
-                   `🕐 ${e.time} (Period ${e.period})<br>` +
-                   `📍 Room: <strong>${e.room || 'TBA'}</strong><br>` +
-                   `👨‍🏫 Faculty: <strong>${fac}</strong>`;
-        }
-
-        // ── Full weekly timetable ────────────────────────────────
-        const byDay = {};
-        entries.forEach(e => {
-            if (!byDay[e.day]) byDay[e.day] = [];
-            byDay[e.day].push(e);
-        });
-        const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
-        const lines = dayOrder.filter(d => byDay[d]).map(d => {
-            const classes = byDay[d].map(e => `P${e.period} ${e.time}: ${e.subject}`).join(' | ');
-            return `<strong>${d}:</strong> ${classes}`;
-        }).join('<br>');
-        return `📅 <strong>IoT 2B — Weekly Schedule</strong><br><br>${lines}`;
+        return null;
     },
 
 
