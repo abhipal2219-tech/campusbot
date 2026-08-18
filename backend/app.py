@@ -4,9 +4,9 @@ app.py
 Campus Connect — Render Web Service (Flask + Gunicorn)
 
 Routes:
-  GET  /health  →  liveness check
-  POST /chat    →  { "message": "...", "history": [...] }
-                ←  { "reply": "..." }
+  GET  /health  ->  liveness check
+  POST /chat    ->  { "message": "...", "history": [...] }
+                <-  { "reply": "..." }
 """
 
 import os
@@ -14,37 +14,48 @@ import json
 import math
 import re
 from collections import Counter
+from datetime import datetime, timezone, timedelta
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 import requests as http_client
 
-# ── Environment ────────────────────────────────────────────────────────────────
+# -- Environment ---------------------------------------------------------------
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 PORT         = int(os.getenv("PORT", 10000))
 
-# ── App setup ──────────────────────────────────────────────────────────────────
+# -- IST timezone (UTC+5:30) ---------------------------------------------------
+IST = timezone(timedelta(hours=5, minutes=30))
+
+def get_ist_now():
+    return datetime.now(IST)
+
+def get_today_ist():
+    return get_ist_now().strftime("%A")   # e.g. "Monday"
+
+def get_time_ist():
+    return get_ist_now().strftime("%I:%M %p")  # e.g. "10:30 AM"
+
+# -- App setup -----------------------------------------------------------------
 app = Flask(__name__)
 
-# Allow requests from GitHub Pages and localhost (dev)
 CORS(app, resources={r"/*": {"origins": [
     "https://abhipal2219-tech.github.io",
     "http://localhost:*",
     "http://127.0.0.1:*"
 ]}})
 
-# ── Data paths ─────────────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 
 
 # ==============================================================================
-# TF-IDF Vector Store (no external ML libraries)
+# TF-IDF Vector Store
 # ==============================================================================
-def _tokenize(text: str) -> list:
+def _tokenize(text):
     text = text.lower()
     text = re.sub(r"[^a-z0-9\s]", " ", text)
     return text.split()
@@ -58,7 +69,7 @@ class VectorStore:
         self.idf        = {}
         self._dirty     = True
 
-    def add_document(self, text: str, metadata: dict = None):
+    def add_document(self, text, metadata=None):
         tokens = _tokenize(text)
         counts = Counter(tokens)
         total  = len(tokens) or 1
@@ -82,11 +93,11 @@ class VectorStore:
         }
         self._dirty = False
 
-    def _tfidf(self, tf: dict) -> dict:
+    def _tfidf(self, tf):
         return {t: v * self.idf.get(t, 0) for t, v in tf.items()}
 
     @staticmethod
-    def _cosine(a: dict, b: dict) -> float:
+    def _cosine(a, b):
         common = set(a) & set(b)
         if not common:
             return 0.0
@@ -95,15 +106,15 @@ class VectorStore:
         normB = math.sqrt(sum(v ** 2 for v in b.values()))
         return dot / (normA * normB) if normA and normB else 0.0
 
-    def search(self, query: str, top_k: int = 5) -> list:
+    def search(self, query, top_k=5):
         if self._dirty:
             self.build_index()
-        tokens  = _tokenize(query)
-        counts  = Counter(tokens)
-        total   = len(tokens) or 1
-        q_tf    = {t: c / total for t, c in counts.items()}
-        q_vec   = self._tfidf(q_tf)
-        scored  = [
+        tokens = _tokenize(query)
+        counts = Counter(tokens)
+        total  = len(tokens) or 1
+        q_tf   = {t: c / total for t, c in counts.items()}
+        q_vec  = self._tfidf(q_tf)
+        scored = [
             (self._cosine(q_vec, self._tfidf(tf)), i)
             for i, tf in enumerate(self.tf_vectors)
         ]
@@ -115,81 +126,184 @@ class VectorStore:
 
 
 # ==============================================================================
-# Knowledge Base — load JSON data into VectorStore at startup
+# Knowledge Base
 # ==============================================================================
-def build_knowledge_base() -> VectorStore:
+_schedule_data = []   # raw list kept for real-time queries
+
+
+def build_knowledge_base():
+    global _schedule_data
     db = VectorStore()
 
     # Faculty
-    faculty_path = os.path.join(DATA_DIR, "faculty.json")
-    with open(faculty_path, encoding="utf-8") as f:
-        faculty = json.load(f)
-    for entry in faculty:
-        text = (
-            f"{entry['name']} ({entry.get('code','')}) is a faculty member "
-            f"in {entry['dept']} department. Cabin: {entry.get('room') or 'Not recorded'}."
-        )
-        db.add_document(text, {"type": "faculty", **entry})
+    with open(os.path.join(DATA_DIR, "faculty.json"), encoding="utf-8") as f:
+        for entry in json.load(f):
+            db.add_document(
+                f"{entry['name']} ({entry.get('code','')}) is a faculty member "
+                f"in {entry['dept']} department. Cabin: {entry.get('room') or 'Not recorded'}.",
+                {"type": "faculty", **entry}
+            )
 
     # Rooms
-    rooms_path = os.path.join(DATA_DIR, "rooms.json")
-    with open(rooms_path, encoding="utf-8") as f:
-        rooms = json.load(f)
-    for entry in rooms:
-        text = (
-            f"{entry['use']} is located in {entry['bld']}, "
-            f"{entry['floor']}, Room {entry['room']}."
-        )
-        db.add_document(text, {"type": "room", **entry})
+    with open(os.path.join(DATA_DIR, "rooms.json"), encoding="utf-8") as f:
+        for entry in json.load(f):
+            db.add_document(
+                f"{entry['use']} is located in {entry['bld']}, "
+                f"{entry['floor']}, Room {entry['room']}.",
+                {"type": "room", **entry}
+            )
 
     # Sections
-    sections_path = os.path.join(DATA_DIR, "sections.json")
-    with open(sections_path, encoding="utf-8") as f:
-        sections = json.load(f)
-    for entry in sections:
-        teacher  = entry["classTeacher"]["name"]
-        mentors  = ", ".join(entry.get("mentors", []))
-        text = (
-            f"Section {entry['section']} is located in {entry['block']}, "
-            f"{entry['floor']}, Room {entry['room']}. "
-            f"Class teacher: {teacher}. Mentors: {mentors}."
-        )
-        db.add_document(text, {"type": "section", **entry})
-
-    # IoT 2B Weekly Schedule
-    schedule_path = os.path.join(DATA_DIR, "iot_2b_schedule.json")
-    if os.path.exists(schedule_path):
-        with open(schedule_path, encoding="utf-8") as f:
-            schedule_data = json.load(f)
-        for entry in schedule_data.get("schedule", []):
-            if entry.get("subject") in ("BREAK", "EAA") or not entry.get("subject"):
-                continue
-            faculty_str = ", ".join(entry.get("faculty", [])) or "TBA"
-            room_str    = entry.get("room") or "TBA"
-            text = (
-                f"IoT 2B schedule: On {entry['day']} period {entry['period']} "
-                f"({entry['time']}), subject is {entry['subject']}. "
-                f"Faculty: {faculty_str}. Room: {room_str}."
+    with open(os.path.join(DATA_DIR, "sections.json"), encoding="utf-8") as f:
+        for entry in json.load(f):
+            db.add_document(
+                f"Section {entry['section']} is in {entry['block']}, "
+                f"{entry['floor']}, Room {entry['room']}. "
+                f"Class teacher: {entry['classTeacher']['name']}. "
+                f"Mentors: {', '.join(entry.get('mentors', []))}.",
+                {"type": "section", **entry}
             )
-            db.add_document(text, {
-                "type":    "schedule",
-                "class":   "IoT 2B",
-                "day":     entry["day"],
-                "period":  entry["period"],
-                "time":    entry["time"],
-                "subject": entry["subject"],
-                "faculty": entry.get("faculty", []),
-                "room":    room_str,
-            })
+
+    # IoT 2B Schedule
+    sched_path = os.path.join(DATA_DIR, "iot_2b_schedule.json")
+    if os.path.exists(sched_path):
+        with open(sched_path, encoding="utf-8") as f:
+            raw = json.load(f)
+        _schedule_data = [
+            e for e in raw.get("schedule", [])
+            if e.get("subject") not in ("BREAK", "EAA") and e.get("subject")
+        ]
+        for e in _schedule_data:
+            fac  = ", ".join(e.get("faculty", [])) or "TBA"
+            room = e.get("room") or "TBA"
+            db.add_document(
+                f"IoT 2B schedule: On {e['day']} period {e['period']} "
+                f"({e['time']}), subject is {e['subject']}. "
+                f"Faculty: {fac}. Room: {room}.",
+                {"type": "schedule", "class": "IoT 2B",
+                 "day": e["day"], "period": e["period"],
+                 "time": e["time"], "subject": e["subject"],
+                 "faculty": e.get("faculty", []), "room": room}
+            )
 
     db.build_index()
     print(f"[READY] Knowledge base: {len(db.documents)} documents indexed.")
     return db
 
 
-# Build the knowledge base once at startup
 print("[*] Building knowledge base...")
 _db = build_knowledge_base()
+
+
+# ==============================================================================
+# Real-time Schedule Handler (IST date-aware)
+# ==============================================================================
+_ORDINAL_MAP = {
+    "first": 1, "second": 2, "third": 3, "fourth": 4,
+    "fifth": 5, "sixth":  6, "seventh": 7, "eighth": 8
+}
+_DAYS = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
+
+
+def _parse_schedule_intent(text):
+    q = text.lower()
+
+    # Detect period number: "period 3", "p3", "3rd period", "third period"
+    period_num = None
+    m = re.search(r'\bperiod\s*(\d)\b|\bp(\d)\b|(\d)(st|nd|rd|th)\s*period', q)
+    if m:
+        period_num = int(m.group(1) or m.group(2) or m.group(3))
+    if not period_num:
+        for word, num in _ORDINAL_MAP.items():
+            if f"{word} period" in q or f"period {word}" in q:
+                period_num = num
+                break
+
+    # Detect explicit day name
+    day_name = None
+    for d in _DAYS:
+        if d in q:
+            day_name = d.capitalize()
+            break
+
+    wants_today = bool(re.search(
+        r'\btoday\b|\bnow\b|\bcurrent\b|\bgoing on\b|\bthis period\b|\bmy class\b', q))
+
+    wants_full = bool(re.search(
+        r'\bschedule\b|\btimetable\b|\ball class\b|\bweekly\b|\broutine\b', q))
+
+    return period_num, day_name, wants_today, wants_full
+
+
+def handle_schedule_query(text):
+    """
+    Returns formatted reply if schedule-related, else None.
+    Auto-uses IST real-time date when no day is specified.
+    """
+    if not _schedule_data:
+        return None
+
+    period_num, day_name, wants_today, wants_full = _parse_schedule_intent(text)
+
+    is_schedule_query = (
+        period_num is not None
+        or wants_today
+        or wants_full
+        or (day_name and re.search(
+            r'\bclass\b|\bperiod\b|\bschedule\b|\bsubject\b', text.lower()))
+    )
+    if not is_schedule_query:
+        return None
+
+    # Resolve day — use IST today if not mentioned
+    now_ist  = get_ist_now()
+    today    = now_ist.strftime("%A")    # e.g. "Tuesday"
+    time_str = now_ist.strftime("%I:%M %p")
+
+    target_day = day_name if day_name else today
+    using_today = (target_day == today)
+
+    # Weekend
+    if target_day in ("Saturday", "Sunday"):
+        return (
+            f"📅 Today is **{target_day}** — no classes for IoT 2B.\n"
+            f"Enjoy your weekend! 🎉"
+        )
+
+    entries = [e for e in _schedule_data if e["day"] == target_day]
+    if not entries:
+        return f"😔 No classes found for IoT 2B on {target_day}."
+
+    day_label = f"Today — {target_day}" if using_today else target_day
+    time_note = f"  _(now: {time_str} IST)_" if using_today else ""
+
+    # Specific period
+    if period_num is not None:
+        match = [e for e in entries if int(e["period"]) == period_num]
+        if not match:
+            return f"😔 No Period {period_num} on {target_day} for IoT 2B."
+        e   = match[0]
+        fac = ", ".join(e.get("faculty", [])) or "TBA"
+        return (
+            f"🕐 **Period {e['period']}** — {day_label}{time_note}\n\n"
+            f"📚 **{e['subject']}**\n"
+            f"🕐 {e['time']}\n"
+            f"📍 Room: **{e['room'] or 'TBA'}**\n"
+            f"👨‍🏫 Faculty: **{fac}**"
+        )
+
+    # Full day schedule
+    lines = []
+    for e in entries:
+        fac = ", ".join(e.get("faculty", [])) or "TBA"
+        lines.append(
+            f"**P{e['period']}** {e['time']} — {e['subject']}\n"
+            f"   📍 {e['room'] or 'TBA'}  |  👨‍🏫 {fac}"
+        )
+    return (
+        f"📅 **IoT 2B — {day_label}**{time_note}\n\n"
+        + "\n\n".join(lines)
+    )
 
 
 # ==============================================================================
@@ -200,40 +314,29 @@ SYSTEM_PROMPT = (
     "## STRICT RULES:\n"
     "1. ONLY use the [CAMPUS DATA] section below. NEVER use training knowledge.\n"
     "2. If the answer is NOT in [CAMPUS DATA], reply EXACTLY:\n"
-    "   \"😔 I don't have that information. Please check the notice board.\"\n"
-    "3. NEVER answer questions about celebrities, sports, maths, coding, history, or anything outside UEM campus.\n"
+    '   "I don\'t have that information. Please check the notice board."\n'
+    "3. NEVER answer questions about celebrities, sports, maths, coding, history, "
+    "or anything outside UEM campus.\n"
     "4. Use **bold** for room numbers, names, and key values.\n"
-    "5. Keep replies concise (3–5 lines max).\n\n"
+    "5. Keep replies concise (3-5 lines max).\n\n"
     "[CAMPUS DATA]\n{context}"
 )
 
 
-def call_groq(query: str, context: str, history: list) -> str | None:
+def call_groq(query, context, history):
     if not GROQ_API_KEY:
         return None
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT.format(context=context)}
-    ]
-    # Inject recent conversation history
+    messages = [{"role": "system", "content": SYSTEM_PROMPT.format(context=context)}]
     for msg in (history or [])[-4:]:
         if isinstance(msg, dict) and "role" in msg and "content" in msg:
             messages.append({"role": msg["role"], "content": str(msg["content"])[:300]})
     messages.append({"role": "user", "content": query})
-
     try:
         resp = http_client.post(
-            url,
-            headers={
-                "Authorization": f"Bearer {GROQ_API_KEY}",
-                "Content-Type":  "application/json"
-            },
-            json={
-                "model":       "llama-3.3-70b-versatile",
-                "messages":    messages,
-                "temperature": 0,
-                "max_tokens":  400
-            },
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+            json={"model": "llama-3.3-70b-versatile", "messages": messages,
+                  "temperature": 0, "max_tokens": 400},
             timeout=15
         )
         resp.raise_for_status()
@@ -248,16 +351,16 @@ def call_groq(query: str, context: str, history: list) -> str | None:
 # ==============================================================================
 @app.route("/health", methods=["GET"])
 def health():
-    """Liveness check for Render."""
-    return jsonify({"status": "ok", "documents": len(_db.documents)}), 200
+    return jsonify({
+        "status":    "ok",
+        "documents": len(_db.documents),
+        "ist_time":  get_ist_now().strftime("%Y-%m-%d %H:%M:%S"),
+        "today":     get_today_ist()
+    }), 200
 
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    """
-    Accepts:  { "message": "...", "history": [...] }
-    Returns:  { "reply": "..." }
-    """
     body    = request.get_json(silent=True) or {}
     message = (body.get("message") or "").strip()
     history = body.get("history", [])
@@ -265,22 +368,24 @@ def chat():
     if not message:
         return jsonify({"error": "message is required"}), 400
 
-    # Build context from top search results
+    # 1. Real-time schedule handler (IST-aware, no Groq needed)
+    sched_reply = handle_schedule_query(message)
+    if sched_reply:
+        return jsonify({"reply": sched_reply})
+
+    # 2. TF-IDF context search
     results = _db.search(message, top_k=8)
     if not results:
-        return jsonify({"reply": "😔 I don't have that information. Please check the notice board."})
+        return jsonify({"reply": "I don't have that information. Please check the notice board."})
 
-    context_lines = []
-    for r in results:
-        context_lines.append(r["text"])
-    context = "\n".join(context_lines)[:5000]
+    context = "\n".join(r["text"] for r in results)[:5000]
 
-    # Call Groq
+    # 3. Groq AI
     ai_reply = call_groq(message, context, history)
     if ai_reply:
         return jsonify({"reply": ai_reply})
 
-    # Fallback: return top raw result
+    # 4. Fallback
     return jsonify({"reply": f"📋 {results[0]['text']}"})
 
 
