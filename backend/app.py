@@ -532,18 +532,34 @@ def chat():
 
         # 2. TF-IDF Context Retrieval
         results = _db.search(message, top_k=8)
-        if not results:
-            return jsonify({"reply": "😔 I don't have that information. Please check the notice board."})
 
-        context = "\n".join(r["text"] for r in results)[:5000]
+        # Filter by relevance threshold — discard low-confidence results.
+        # Calibrated thresholds from observed scores:
+        #   - irrelevant (shahrukh khan, maths count): 0.14 - 0.22
+        #   - edge valid (Section G): 0.24
+        #   - strong valid (Prof name, room): 0.30+
+        CONTEXT_THRESHOLD  = 0.23   # min score to accept as relevant at all
+        FALLBACK_THRESHOLD = 0.23   # same — if it's relevant enough for context, show it directly when Groq is down
+
+        relevant = [r for r in results if r["score"] >= CONTEXT_THRESHOLD]
+
+        if not relevant:
+            return jsonify({"reply": "😔 I don't have that information. Please check the notice board or ask about faculty, rooms, or sections."})
+
+        context = "\n".join(r["text"] for r in relevant)[:5000]
 
         # 3. Groq LLM
         ai_reply = call_groq(message, context, history)
         if ai_reply:
             return jsonify({"reply": ai_reply})
 
-        # 4. Fallback to top retrieved record
-        return jsonify({"reply": f"📋 {results[0]['text']}"})
+        # 4. Fallback: only show raw result if score is high enough to be reliable
+        top = relevant[0]
+        if top["score"] >= FALLBACK_THRESHOLD:
+            return jsonify({"reply": f"📋 {top['text']}"})
+
+        # Score is too low to be reliable — refuse rather than guess
+        return jsonify({"reply": "😔 I don't have that information. Please check the notice board."})
 
     except Exception as e:
         print(f"[Chat Endpoint Error] {e}")
