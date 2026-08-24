@@ -1,12 +1,12 @@
-"""
+﻿"""
 app.py
 ------
-Campus Connect — Render Web Service (Flask + Gunicorn)
+Campus Connect â€” Render Web Service (Flask + Gunicorn)
 
 Routes:
-  GET  /health  →  liveness check + server status
-  POST /chat    →  { "message": "...", "history": [...] }
-                ←  { "reply": "..." }
+  GET  /health  â†’  liveness check + server status
+  POST /chat    â†’  { "message": "...", "history": [...] }
+                â†  { "reply": "..." }
 """
 
 import os
@@ -21,13 +21,13 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import requests as http_client
 
-# ── Environment ────────────────────────────────────────────────────────────────
+# â”€â”€ Environment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 PORT         = int(os.getenv("PORT", 10000))
 
-# ── IST Timezone (UTC+5:30) ───────────────────────────────────────────────────
+# â”€â”€ IST Timezone (UTC+5:30) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 IST = timezone(timedelta(hours=5, minutes=30))
 
 def get_ist_now() -> datetime:
@@ -39,7 +39,7 @@ def get_today_ist() -> str:
 def get_time_ist() -> str:
     return get_ist_now().strftime("%I:%M %p")
 
-# ── App setup ──────────────────────────────────────────────────────────────────
+# â”€â”€ App setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app = Flask(__name__)
 
 CORS(app, resources={r"/*": {"origins": [
@@ -48,7 +48,7 @@ CORS(app, resources={r"/*": {"origins": [
     "http://127.0.0.1:*"
 ]}})
 
-# ── Data paths ─────────────────────────────────────────────────────────────────
+# â”€â”€ Data paths â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR     = os.path.join(BASE_DIR, "data")
 FRONTEND_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "frontend"))
@@ -307,19 +307,19 @@ def handle_schedule_query(text: str) -> str | None:
             lines = []
             for e in matches:
                 fac = ", ".join(e.get("faculty", [])) or "TBA"
-                lines.append(f"**{e['day']}** P{e['period']} ({e['time']}): **{e['subject']}**\n   📍 Room: **{e['room'] or 'TBA'}** | 👨‍🏫 Faculty: **{fac}**")
-            return f"📚 **{matches[0]['subject']} Schedule (IoT 2B)**\n\n" + "\n\n".join(lines)
+                lines.append(f"**{e['day']}** P{e['period']} ({e['time']}): **{e['subject']}**\n   ðŸ“ Room: **{e['room'] or 'TBA'}** | ðŸ‘¨â€ðŸ« Faculty: **{fac}**")
+            return f"ðŸ“š **{matches[0]['subject']} Schedule (IoT 2B)**\n\n" + "\n\n".join(lines)
 
     # Case 2: Multi-day period query (e.g. "3rd period all days")
     if period_num is not None and wants_all_days:
         matches = [e for e in _schedule_data if int(e["period"]) == period_num]
         if not matches:
-            return f"😔 No Period {period_num} classes found."
+            return f"ðŸ˜” No Period {period_num} classes found."
         lines = []
         for e in matches:
             fac = ", ".join(e.get("faculty", [])) or "TBA"
             lines.append(f"**{e['day']}** ({e['time']}): **{e['subject']}** (Room: {e['room']}, Faculty: {fac})")
-        return f"🕐 **Period {period_num} Across the Week (IoT 2B)**\n\n" + "\n\n".join(lines)
+        return f"ðŸ• **Period {period_num} Across the Week (IoT 2B)**\n\n" + "\n\n".join(lines)
 
     # Resolve target day for single-day queries
     target_day = matched_day
@@ -338,31 +338,31 @@ def handle_schedule_query(text: str) -> str | None:
     if target_day in ("Saturday", "Sunday") and not wants_all_days:
         day_label = f"Today ({target_day})" if is_today else target_day
         return (
-            f"📅 **{day_label}** — No classes scheduled for IoT 2B.\n"
-            f"Enjoy your weekend! 🎉\n\n"
-            f"💡 *Tip: Ask `Monday schedule` to see upcoming classes.*"
+            f"ðŸ“… **{day_label}** â€” No classes scheduled for IoT 2B.\n"
+            f"Enjoy your weekend! ðŸŽ‰\n\n"
+            f"ðŸ’¡ *Tip: Ask `Monday schedule` to see upcoming classes.*"
         )
 
     # Case 4: Single day schedule queries
     if target_day and not wants_all_days:
         day_entries = [e for e in _schedule_data if e["day"] == target_day]
         if not day_entries:
-            return f"😔 No schedule records found for IoT 2B on {target_day}."
+            return f"ðŸ˜” No schedule records found for IoT 2B on {target_day}."
 
         # Specific period
         if period_num is not None:
             match = [e for e in day_entries if int(e["period"]) == period_num]
             if not match:
-                return f"😔 No Period {period_num} scheduled for IoT 2B on {target_day}."
+                return f"ðŸ˜” No Period {period_num} scheduled for IoT 2B on {target_day}."
             e = match[0]
             fac = ", ".join(e.get("faculty", [])) or "TBA"
             day_text = f"Today ({target_day})" if is_today else target_day
             return (
-                f"🕐 **Period {e['period']}** — {day_text}\n\n"
-                f"📚 **{e['subject']}**\n"
-                f"⏰ **Time:** {e['time']}\n"
-                f"📍 **Room:** {e['room'] or 'TBA'}\n"
-                f"👨‍🏫 **Faculty:** {fac}"
+                f"ðŸ• **Period {e['period']}** â€” {day_text}\n\n"
+                f"ðŸ“š **{e['subject']}**\n"
+                f"â° **Time:** {e['time']}\n"
+                f"ðŸ“ **Room:** {e['room'] or 'TBA'}\n"
+                f"ðŸ‘¨â€ðŸ« **Faculty:** {fac}"
             )
 
         # Specific subject on this day
@@ -373,12 +373,12 @@ def handle_schedule_query(text: str) -> str | None:
                 for e in sub_matches:
                     fac = ", ".join(e.get("faculty", [])) or "TBA"
                     cards.append(
-                        f"📚 **{e['subject']}**\n"
-                        f"⏰ Period {e['period']} ({e['time']})\n"
-                        f"📍 Room: **{e['room'] or 'TBA'}** | 👨‍🏫 Faculty: **{fac}**"
+                        f"ðŸ“š **{e['subject']}**\n"
+                        f"â° Period {e['period']} ({e['time']})\n"
+                        f"ðŸ“ Room: **{e['room'] or 'TBA'}** | ðŸ‘¨â€ðŸ« Faculty: **{fac}**"
                     )
                 day_text = f"Today ({target_day})" if is_today else target_day
-                return f"📅 **{day_text}** — IoT 2B\n\n" + "\n\n".join(cards)
+                return f"ðŸ“… **{day_text}** â€” IoT 2B\n\n" + "\n\n".join(cards)
 
         # Full day schedule
         lines = []
@@ -386,9 +386,9 @@ def handle_schedule_query(text: str) -> str | None:
             fac = ", ".join(e.get("faculty", [])) or "TBA"
             lines.append(
                 f"**P{e['period']}** ({e['time']}) : **{e['subject']}**\n"
-                f"   📍 Room {e['room'] or 'TBA'}  |  👨‍🏫 {fac}"
+                f"   ðŸ“ Room {e['room'] or 'TBA'}  |  ðŸ‘¨â€ðŸ« {fac}"
             )
-        header = f"📅 **IoT 2B Schedule — {'Today (' + target_day + ')' if is_today else target_day}**"
+        header = f"ðŸ“… **IoT 2B Schedule â€” {'Today (' + target_day + ')' if is_today else target_day}**"
         if is_today:
             header += f"\n*(Current IST: {current_time_str})*"
         return header + "\n\n" + "\n\n".join(lines)
@@ -403,8 +403,8 @@ def handle_schedule_query(text: str) -> str | None:
         for d in day_order:
             if d in by_day:
                 items = [f"P{e['period']} ({e['time']}): {e['subject']} (Room: {e['room']})" for e in by_day[d]]
-                blocks.append(f"**{d}**\n • " + "\n • ".join(items))
-        return "📅 **IoT 2B Weekly Timetable**\n\n" + "\n\n".join(blocks)
+                blocks.append(f"**{d}**\n â€¢ " + "\n â€¢ ".join(items))
+        return "ðŸ“… **IoT 2B Weekly Timetable**\n\n" + "\n\n".join(blocks)
 
     return None
 
@@ -413,19 +413,19 @@ def handle_schedule_query(text: str) -> str | None:
 # Groq LLM Generation
 # ==============================================================================
 SYSTEM_PROMPT = (
-    "You are 'Campus Connect' — the official AI assistant for UEM Kolkata campus ONLY.\n\n"
+    "You are 'Campus Connect' â€” the official AI assistant for UEM Kolkata campus ONLY.\n\n"
     "## STRICT RULES:\n"
     "1. ONLY use the [CAMPUS DATA] section below. NEVER use training knowledge.\n"
     "2. If the answer is NOT in [CAMPUS DATA], reply EXACTLY:\n"
-    '   "😔 I don\'t have that information. Please check the notice board."\n'
+    '   "ðŸ˜” I don\'t have that information. Please check the notice board."\n'
     "3. NEVER answer questions about celebrities, sports, maths, coding, history, or anything outside UEM campus.\n"
     "4. Use **bold** for room numbers, names, and key values.\n"
-    "5. Keep replies concise (3–5 lines max).\n\n"
+    "5. Keep replies concise (3â€“5 lines max).\n\n"
     "[CAMPUS DATA]\n{context}"
 )
 
 
-# Models to try in order — update this list if Groq deprecates a model
+# Models to try in order â€” update this list if Groq deprecates a model
 GROQ_MODELS = [
     "llama-3.3-70b-versatile",     # primary (may be deprecated)
     "openai/gpt-oss-120b",          # Groq's new flagship (Aug 2026)
@@ -533,18 +533,18 @@ def chat():
         # 2. TF-IDF Context Retrieval
         results = _db.search(message, top_k=8)
 
-        # Filter by relevance threshold — discard low-confidence results.
+        # Filter by relevance threshold â€” discard low-confidence results.
         # Calibrated thresholds from observed scores:
         #   - irrelevant (shahrukh khan, maths count): 0.14 - 0.22
         #   - edge valid (Section G): 0.24
         #   - strong valid (Prof name, room): 0.30+
         CONTEXT_THRESHOLD  = 0.23   # min score to accept as relevant at all
-        FALLBACK_THRESHOLD = 0.23   # same — if it's relevant enough for context, show it directly when Groq is down
+        FALLBACK_THRESHOLD = 0.23   # same â€” if it's relevant enough for context, show it directly when Groq is down
 
         relevant = [r for r in results if r["score"] >= CONTEXT_THRESHOLD]
 
         if not relevant:
-            return jsonify({"reply": "😔 I don't have that information. Please check the notice board or ask about faculty, rooms, or sections."})
+            return jsonify({"reply": "ðŸ˜” I don't have that information. Please check the notice board or ask about faculty, rooms, or sections."})
 
         context = "\n".join(r["text"] for r in relevant)[:5000]
 
@@ -556,18 +556,19 @@ def chat():
         # 4. Fallback: only show raw result if score is high enough to be reliable
         top = relevant[0]
         if top["score"] >= FALLBACK_THRESHOLD:
-            return jsonify({"reply": f"📋 {top['text']}"})
+            return jsonify({"reply": f"ðŸ“‹ {top['text']}"})
 
-        # Score is too low to be reliable — refuse rather than guess
-        return jsonify({"reply": "😔 I don't have that information. Please check the notice board."})
+        # Score is too low to be reliable â€” refuse rather than guess
+        return jsonify({"reply": "ðŸ˜” I don't have that information. Please check the notice board."})
 
     except Exception as e:
         print(f"[Chat Endpoint Error] {e}")
-        return jsonify({"reply": "😔 An internal error occurred. Please try again."}), 200
+        return jsonify({"reply": "ðŸ˜” An internal error occurred. Please try again."}), 200
 
 
 # ==============================================================================
-# Entry Point
+# Entry Point (build: 2026-08-25 02:39)
 # ==============================================================================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=PORT, debug=False)
+
