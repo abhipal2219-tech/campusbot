@@ -425,6 +425,15 @@ SYSTEM_PROMPT = (
 )
 
 
+# Models to try in order — update this list if Groq deprecates a model
+GROQ_MODELS = [
+    "llama-3.3-70b-versatile",     # primary (may be deprecated)
+    "openai/gpt-oss-120b",          # Groq's new flagship (Aug 2026)
+    "openai/gpt-oss-20b",           # Groq's fast model (Aug 2026)
+    "llama3-70b-8192",              # older fallback
+]
+
+
 def call_groq(query: str, context: str, history: list) -> str | None:
     if not GROQ_API_KEY:
         return None
@@ -437,26 +446,38 @@ def call_groq(query: str, context: str, history: list) -> str | None:
             messages.append({"role": msg["role"], "content": str(msg["content"])[:300]})
     messages.append({"role": "user", "content": query})
 
-    try:
-        resp = http_client.post(
-            url,
-            headers={
-                "Authorization": f"Bearer {GROQ_API_KEY}",
-                "Content-Type":  "application/json"
-            },
-            json={
-                "model":       "llama-3.3-70b-versatile",
-                "messages":    messages,
-                "temperature": 0,
-                "max_tokens":  400
-            },
-            timeout=15
-        )
-        resp.raise_for_status()
-        return resp.json()["choices"][0]["message"]["content"]
-    except Exception as e:
-        print(f"[Groq Error] {e}")
-        return None
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type":  "application/json"
+    }
+
+    for model in GROQ_MODELS:
+        try:
+            resp = http_client.post(
+                url,
+                headers=headers,
+                json={
+                    "model":       model,
+                    "messages":    messages,
+                    "temperature": 0,
+                    "max_tokens":  400
+                },
+                timeout=15
+            )
+            if resp.status_code == 404:
+                print(f"[Groq] Model '{model}' not found, trying next...")
+                continue
+            resp.raise_for_status()
+            result = resp.json()["choices"][0]["message"]["content"]
+            if model != GROQ_MODELS[0]:
+                print(f"[Groq] Used fallback model: {model}")
+            return result
+        except Exception as e:
+            print(f"[Groq Error] model={model}: {e}")
+            continue
+
+    print("[Groq] All models failed.")
+    return None
 
 
 # ==============================================================================
